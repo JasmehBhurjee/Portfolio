@@ -377,7 +377,7 @@
   .deck-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
   .deck-scroll:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
   .deck-slide {
-    flex: 0 0 74%; scroll-snap-align: start;
+    flex: 0 0 74%; min-width: 0; min-height: 0; scroll-snap-align: start;
     aspect-ratio: 16 / 9; object-fit: contain; cursor: zoom-in;
     background: #fff; border: 1px solid var(--line); border-radius: 4px;
     display: block;
