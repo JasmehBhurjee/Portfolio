@@ -4,39 +4,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+  /* Site is locked to dark mode always, regardless of the visitor's OS/browser
+     color-scheme preference -- no light palette shipped, so there's nothing
+     for prefers-color-scheme to fall back to. */
   :root {
-    --paper: #EEECE4;
-    --paper-raised: #FAF9F5;
-    --paper-sunken: #E4E1D6;
-    --ink: #1C1B17;
-    --ink-muted: #625F54;
-    --line: #D6D2C4;
-    --blueprint: #1F4A80;
-    --blueprint-soft: #E4ECF5;
-    --copper: #A6551F;
-    --copper-soft: #F3E3D3;
-    --scarlet: #BB0000;
-    --case-red: #BB0000;
-    --shadow: 0 1px 0 rgba(28,27,23,0.06);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --paper: #15171A;
-      --paper-raised: #1D2024;
-      --paper-sunken: #22252A;
-      --ink: #ECE9E0;
-      --ink-muted: #9C988C;
-      --line: #33363B;
-      --blueprint: #7FADE0;
-      --blueprint-soft: #1C2A3A;
-      --copper: #E0925A;
-      --copper-soft: #34241A;
-      --scarlet: #FF5B54;
-      --case-red: #7A2620;
-      --shadow: 0 1px 0 rgba(0,0,0,0.3);
-    }
-  }
-  :root[data-theme="dark"] {
+    color-scheme: dark;
     --paper: #15171A;
     --paper-raised: #1D2024;
     --paper-sunken: #22252A;
@@ -132,6 +104,11 @@
   #pixelCanvas {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     z-index: 1; pointer-events: none; display: block;
+  }
+  /* ---------- GHOSTLY FLUID AURA CURSOR TRAIL (below hero) ---------- */
+  #auraCanvas {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 50; pointer-events: none; display: block;
   }
   main#top { position: relative; z-index: 10; padding-top: 104px; }
 
@@ -532,6 +509,7 @@
 </style>
 
 <canvas id="pixelCanvas" aria-hidden="true"></canvas>
+<canvas id="auraCanvas" aria-hidden="true"></canvas>
 
 <header class="site-nav" id="siteHeader">
   <div class="nav-inner">
@@ -602,6 +580,7 @@
         <div class="hero-edu">
           <span class="tb-label">Education</span>
           B.S. Mechanical Engineering<br>
+          Minor in Robotics &amp; Autonomous Systems<br>
           <span class="osu">The Ohio State University</span><br>
           GPA 3.83 &middot; May 2029
         </div>
@@ -1223,6 +1202,144 @@
       }
       ctx.globalAlpha = 1;
       if (!reduceMotion) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  /* ---- ghostly / spectral fluid aura cursor trail (everywhere below the hero) ---- */
+  (function () {
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var noHover = window.matchMedia('(hover: none)').matches;
+    var hero = document.getElementById('about');
+    var canvas = document.getElementById('auraCanvas');
+    if (reduceMotion || noHover || !hero || !canvas || !canvas.getContext) return;
+
+    var ctx = canvas.getContext('2d');
+    var dpr = Math.max(1, window.devicePixelRatio || 1);
+    var vw = 0, vh = 0;
+
+    function resize() {
+      vw = window.innerWidth; vh = window.innerHeight;
+      canvas.width = Math.round(vw * dpr);
+      canvas.height = Math.round(vh * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    /* icy moonlit whites, faint spirit-cyan, and wisps of crimson smoke echoing the brand accent */
+    var TONES = [
+      { rgb: '220,235,255', weight: 0.56 },
+      { rgb: '176,222,232', weight: 0.24 },
+      { rgb: '186,12,47', weight: 0.20 }
+    ];
+    function pickTone() {
+      var r = Math.random(), acc = 0;
+      for (var i = 0; i < TONES.length; i++) {
+        acc += TONES[i].weight;
+        if (r <= acc) return TONES[i].rgb;
+      }
+      return TONES[0].rgb;
+    }
+
+    var wisps = [];
+    var MAX_WISPS = 130;
+    var lastX = -1, lastY = -1;
+
+    function heroBottom() {
+      return hero.getBoundingClientRect().bottom;
+    }
+
+    window.addEventListener('mousemove', function (e) {
+      var mx = e.clientX, my = e.clientY;
+      if (lastX < 0 || my < heroBottom()) { lastX = mx; lastY = my; return; }
+      var dx = mx - lastX, dy = my - lastY;
+      var dist = Math.hypot(dx, dy);
+      var steps = Math.max(1, Math.min(5, Math.round(dist / 10)));
+      var now = performance.now();
+      for (var i = 0; i < steps; i++) {
+        var t = (i + 1) / steps;
+        wisps.push({
+          x: lastX + dx * t,
+          y: lastY + dy * t,
+          vx: dx * 0.012 + (Math.random() - 0.5) * 0.3,
+          vy: dy * 0.012 + (Math.random() - 0.5) * 0.3,
+          born: now,
+          life: 600 + Math.random() * 300,
+          r0: 5 + Math.random() * 7,
+          seed: Math.random() * 6.283,
+          rgb: pickTone()
+        });
+      }
+      if (wisps.length > MAX_WISPS) wisps.splice(0, wisps.length - MAX_WISPS);
+      lastX = mx; lastY = my;
+    }, { passive: true });
+
+    /* cheap layered-sine curl, gives each wisp its own uncorrelated turbulent wander.
+       Used as a bounded oscillating offset (not accumulated force), so it stays a
+       gentle billow instead of runaway drift. */
+    function curl(seed, t) {
+      return Math.sin(seed + t * 0.0021) * 0.6 + Math.sin(seed * 1.87 + t * 0.0035 + 2.1) * 0.4;
+    }
+
+    var lastTick = performance.now();
+
+    function frame() {
+      var now = performance.now();
+      var dt = Math.min(48, now - lastTick);
+      lastTick = now;
+
+      ctx.clearRect(0, 0, vw, vh);
+      var clipTop = Math.max(0, heroBottom());
+
+      if (wisps.length && clipTop < vh) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, clipTop, vw, vh - clipTop);
+        ctx.clip();
+        ctx.globalCompositeOperation = 'lighter';
+
+        for (var i = wisps.length - 1; i >= 0; i--) {
+          var w = wisps[i];
+          var age = now - w.born;
+          if (age > w.life) { wisps.splice(i, 1); continue; }
+
+          /* slight inertia: the base center drifts from its spawn velocity, damped quickly */
+          w.vx *= 0.90;
+          w.vy *= 0.90;
+          w.x += w.vx * dt;
+          w.y += w.vy * dt - 0.012 * dt; /* faint upward buoyancy, like rising mist */
+
+          var t = age / w.life;
+          var eased = 1 - Math.pow(1 - t, 2);
+
+          /* rotational curl/turbulence: a bounded wobble around the drifting center,
+             widening as the wisp ages, rather than an accumulated force */
+          var wobble = 3 + eased * 15;
+          var ox = curl(w.seed, now) * wobble;
+          var oy = curl(w.seed + 47, now + 900) * wobble * 0.85;
+          var dx = w.x + ox, dy = w.y + oy;
+
+          var radius = w.r0 * (1 + eased * 3.4);
+          var alpha = (1 - t) * (1 - t) * 0.6;
+
+          var grad = ctx.createRadialGradient(dx, dy, 0, dx, dy, radius);
+          grad.addColorStop(0, 'rgba(' + w.rgb + ',' + alpha + ')');
+          grad.addColorStop(0.45, 'rgba(' + w.rgb + ',' + (alpha * 0.4) + ')');
+          grad.addColorStop(1, 'rgba(' + w.rgb + ',0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(dx, dy, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else if (wisps.length) {
+        for (var j = wisps.length - 1; j >= 0; j--) {
+          if (now - wisps[j].born > wisps[j].life) wisps.splice(j, 1);
+        }
+      }
+
+      requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   })();
