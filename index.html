@@ -143,10 +143,10 @@
   }
   .hero-grid {
     position: relative; z-index: 1;
-    display: grid; grid-template-columns: 1fr 300px; gap: 48px; align-items: start;
+    display: grid; grid-template-columns: 1fr 220px; gap: 48px; align-items: start;
   }
   .hero-right {
-    display: flex; flex-direction: column; gap: 20px;
+    display: flex; flex-direction: column; gap: 16px;
   }
   .hero-blocko-target {
     width: 100%; aspect-ratio: 4 / 5;
@@ -175,7 +175,7 @@
     opacity: 0; transform: translateY(-4px);
   }
   .hero-bio { margin-top: 28px; max-width: 62ch; }
-  .hero-bio p { font-size: 1.02rem; }
+  .hero-bio p { font-size: 1.15rem; line-height: 1.65; }
   .photo-frame {
     position: relative;
   }
@@ -199,15 +199,15 @@
     pointer-events: none;
   }
   .hero-edu {
-    margin-top: 20px; padding: 10px 14px;
+    padding: 8px 11px;
     border: 1px solid var(--line); border-radius: 3px;
     background: var(--paper-raised);
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.7rem; line-height: 1.5;
   }
   @media (max-width: 980px) {
     .hero-grid { grid-template-columns: 1fr; }
-    .hero-right { max-width: 320px; margin: 0 auto; }
+    .hero-right { max-width: 240px; margin: 0 auto; }
   }
 
   /* title-block: label:value strip, echoes the drafting title blocks on the CAD sheets */
