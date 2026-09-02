@@ -18,7 +18,6 @@
     --scarlet: #BB0000;
     --case-red: #BB0000;
     --shadow: 0 1px 0 rgba(28,27,23,0.06);
-    --spotlight: rgba(31,74,128,0.14);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -35,7 +34,6 @@
       --scarlet: #FF5B54;
       --case-red: #7A2620;
       --shadow: 0 1px 0 rgba(0,0,0,0.3);
-      --spotlight: rgba(127,173,224,0.12);
     }
   }
   :root[data-theme="dark"] {
@@ -52,7 +50,6 @@
     --scarlet: #FF5B54;
     --case-red: #7A2620;
     --shadow: 0 1px 0 rgba(0,0,0,0.3);
-    --spotlight: rgba(127,173,224,0.12);
   }
 
   * { box-sizing: border-box; }
@@ -135,16 +132,6 @@
     padding: 72px 0 60px;
     border-bottom: 1px solid var(--line);
   }
-  .hero-spotlight {
-    position: absolute; top: 0; left: 0;
-    width: 480px; height: 480px;
-    margin-left: -240px; margin-top: -240px;
-    background: radial-gradient(circle, var(--spotlight), transparent 72%);
-    filter: blur(4px);
-    opacity: 0; transition: opacity 0.35s ease;
-    pointer-events: none; z-index: 0;
-  }
-  .hero-spotlight.active { opacity: 1; transition: opacity 0.2s ease; }
   .hero-grid {
     position: relative; z-index: 1;
     display: grid; grid-template-columns: 1fr 240px; gap: 48px; align-items: start;
@@ -550,7 +537,6 @@
 
   <!-- ================= ABOUT (masthead + bio, combined) ================= -->
   <div class="hero" id="about">
-    <div class="hero-spotlight" id="heroSpotlight" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div>
         <p class="eyebrow">Mechanical Engineering &middot; <span class="osu">The Ohio State University</span> &middot; Class of 2029</p>
@@ -1000,24 +986,6 @@
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
     els.forEach(function (el) { io.observe(el); });
-  })();
-
-  /* ---- hero mouse-follow spotlight ---- */
-  (function () {
-    var hero = document.getElementById('about');
-    var glow = document.getElementById('heroSpotlight');
-    if (!hero || !glow) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (window.matchMedia('(hover: none)').matches) return;
-
-    hero.addEventListener('mousemove', function (e) {
-      var r = hero.getBoundingClientRect();
-      glow.style.transform = 'translate(' + (e.clientX - r.left) + 'px, ' + (e.clientY - r.top) + 'px)';
-      glow.classList.add('active');
-    });
-    hero.addEventListener('mouseleave', function () {
-      glow.classList.remove('active');
-    });
   })();
 
   /* ---- name underline that bends toward the cursor ---- */
