@@ -185,20 +185,21 @@
     transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
     will-change: transform;
   }
+  /* Which face is shown is controlled directly by JS (opacity), not by
+     backface-visibility. Safari has a long-standing WebKit bug where
+     backface-visibility:hidden combined with overflow:hidden/border-radius
+     on an element inside a preserve-3d transformed card can fail to paint
+     the face's content at all (Chrome renders it fine, Safari shows a
+     blank box). Driving visibility with opacity instead sidesteps that
+     bug entirely while the rotateY transform still does the visual turn. */
   .photo-flip-face {
     position: absolute; inset: 0;
-    backface-visibility: hidden; -webkit-backface-visibility: hidden;
     border: 1px solid var(--line); border-radius: 3px;
     overflow: hidden;
     background: var(--paper-raised);
-    /* Safari-only fix: overflow:hidden + border-radius on a face inside a
-       preserve-3d transformed card can make WebKit fail to paint the face's
-       content at all (a long-standing WebKit bug). A no-op mask-image forces
-       Safari onto its correct compositing path without visually changing
-       anything (a full white radial gradient masks nothing out). */
-    -webkit-mask-image: -webkit-radial-gradient(circle, #fff 100%, #000 100%);
   }
-  .photo-flip-back { transform: rotateY(180deg); }
+  .photo-flip-front { opacity: 1; }
+  .photo-flip-back { transform: rotateY(180deg); opacity: 0; pointer-events: none; }
   .photo-flip-face .hero-photo {
     width: 100%; height: 100%; object-fit: cover;
     filter: grayscale(8%);
@@ -1637,12 +1638,32 @@
     var card = document.getElementById('photoFlipCard');
     var inner = document.getElementById('photoFlipInner');
     if (!card || !inner) return;
+    var frontFace = card.querySelector('.photo-flip-front');
+    var backFace = card.querySelector('.photo-flip-back');
 
     var hint = document.getElementById('photoFlipHint');
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var noHover = window.matchMedia('(hover: none)').matches;
     var flipped = false;
     var targetFlip = 0, curFlip = 0;
+    var backShowing = false;
+
+    /* Which face is visible is driven here, not by CSS backface-visibility
+       (see the .photo-flip-face comment above for why). Called on every
+       frame during the animated flip, and directly for reduced-motion. */
+    function updateFaceVisibility(angle) {
+      var showBack = angle > 90;
+      if (showBack === backShowing) return;
+      backShowing = showBack;
+      if (frontFace) {
+        frontFace.style.opacity = showBack ? '0' : '1';
+        frontFace.style.pointerEvents = showBack ? 'none' : '';
+      }
+      if (backFace) {
+        backFace.style.opacity = showBack ? '1' : '0';
+        backFace.style.pointerEvents = showBack ? '' : 'none';
+      }
+    }
 
     function toggleFlip() {
       flipped = !flipped;
@@ -1651,6 +1672,7 @@
       if (reduceMotion) {
         curFlip = targetFlip;
         inner.style.transform = 'rotateY(' + targetFlip + 'deg)';
+        updateFaceVisibility(targetFlip);
       }
     }
     card.addEventListener('click', toggleFlip);
@@ -1710,6 +1732,7 @@
       var flipLift = Math.sin(curFlip * Math.PI / 180) * 46;
       inner.style.transform =
         'rotateY(' + (curFlip + curRY) + 'deg) rotateX(' + curRX + 'deg) translateZ(' + (curTZ + flipLift) + 'px)';
+      updateFaceVisibility(curFlip);
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
