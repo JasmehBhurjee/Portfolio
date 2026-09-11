@@ -182,16 +182,18 @@
   .photo-flip-inner {
     position: relative;
     width: 100%; height: 100%;
-    transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
+    transform-origin: center center;
     will-change: transform;
   }
-  /* Which face is shown is controlled directly by JS (opacity), not by
-     backface-visibility. Safari has a long-standing WebKit bug where
-     backface-visibility:hidden combined with overflow:hidden/border-radius
-     on an element inside a preserve-3d transformed card can fail to paint
-     the face's content at all (Chrome renders it fine, Safari shows a
-     blank box). Driving visibility with opacity instead sidesteps that
-     bug entirely while the rotateY transform still does the visual turn. */
+  /* The "flip" is a 2D scaleX squash, not a true 3D rotateY turn. Two flat,
+     untransformed faces are stacked on top of each other with plain CSS
+     (position:absolute; inset:0) and swapped via opacity at the moment the
+     shared parent (.photo-flip-inner) is squashed to a sliver (scaleX ~ 0).
+     This deliberately avoids preserve-3d + backface-visibility + a rotateY
+     per face -- the combination every earlier attempt used and that has a
+     documented history of Safari/WebKit paint failures (the element behind
+     the rotated face never composites). A parent-level scaleX transform has
+     no such history and is supported identically everywhere. */
   .photo-flip-face {
     position: absolute; inset: 0;
     border: 1px solid var(--line); border-radius: 3px;
@@ -199,15 +201,13 @@
     background: var(--paper-raised);
   }
   .photo-flip-front { opacity: 1; }
-  .photo-flip-back { transform: rotateY(180deg); opacity: 0; pointer-events: none; }
+  .photo-flip-back { opacity: 0; pointer-events: none; }
   .photo-flip-face .hero-photo {
     width: 100%; height: 100%; object-fit: cover;
     display: block;
-    /* No CSS `filter` here on purpose: Safari has a bug where a filtered
-       element inside a perspective/preserve-3d ancestor that's animated via
-       JS every frame (this card is) fails to paint at all -- the element
-       just never composites, which is what was actually causing the blank
-       photo in Safari (backface-visibility was a red herring). */
+    /* No CSS `filter` here on purpose -- see git history: a filter on an
+       image inside a JS-animated transformed ancestor previously caused a
+       Safari paint failure. Kept off to stay well clear of that class of bug. */
   }
   /* small "Click!" hint that tracks the cursor while hovering the photo card */
   .photo-flip-hint {
@@ -1652,9 +1652,12 @@
     var targetFlip = 0, curFlip = 0;
     var backShowing = false;
 
-    /* Which face is visible is driven here, not by CSS backface-visibility
-       (see the .photo-flip-face comment above for why). Called on every
-       frame during the animated flip, and directly for reduced-motion. */
+    /* Which face is visible is a plain opacity swap on two flat, untransformed
+       elements -- not CSS backface-visibility on a rotated face (see the
+       .photo-flip-face comment above for why). Swaps at the midpoint of the
+       squash animation, when the card reads as a thin vertical sliver, so
+       the swap itself is never visible. Called every frame during the
+       animation, and directly for reduced-motion. */
     function updateFaceVisibility(angle) {
       var showBack = angle > 90;
       if (showBack === backShowing) return;
@@ -1675,7 +1678,7 @@
       targetFlip = flipped ? 180 : 0;
       if (reduceMotion) {
         curFlip = targetFlip;
-        inner.style.transform = 'rotateY(' + targetFlip + 'deg)';
+        inner.style.transform = 'scaleX(1)';
         updateFaceVisibility(targetFlip);
       }
     }
@@ -1731,11 +1734,17 @@
       curTZ += (targetTZ - curTZ) * LERP;
       curFlip += (targetFlip - curFlip) * FLIP_LERP;
       if (Math.abs(targetFlip - curFlip) < 0.05) curFlip = targetFlip;
-      /* lift the card off the surface at the midpoint of the rotation so it
-         reads as a physical card turning edge-on, not a instant swap */
+      /* The flip itself is a scaleX squash (1 -> 0 -> 1), not a rotateY turn,
+         so it can't rely on backface-visibility/preserve-3d at all -- see the
+         CSS comment on .photo-flip-inner. abs(cos) keeps the scale from ever
+         going negative, so the card narrows to a sliver and widens back out
+         instead of mirroring. The mouse-tilt (rotateX/rotateY/translateZ)
+         rides along on the same transform, purely cosmetic and independent
+         of the flip mechanic. */
+      var flipScale = Math.abs(Math.cos(curFlip * Math.PI / 180));
       var flipLift = Math.sin(curFlip * Math.PI / 180) * 46;
       inner.style.transform =
-        'rotateY(' + (curFlip + curRY) + 'deg) rotateX(' + curRX + 'deg) translateZ(' + (curTZ + flipLift) + 'px)';
+        'rotateY(' + curRY + 'deg) rotateX(' + curRX + 'deg) scaleX(' + flipScale + ') translateZ(' + (curTZ + flipLift) + 'px)';
       updateFaceVisibility(curFlip);
       requestAnimationFrame(frame);
     }
