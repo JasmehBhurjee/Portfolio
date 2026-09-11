@@ -202,12 +202,15 @@
      transformed, so it never sits inside a compositing layer. It fills the
      card's full padding box (inset:0 on an absolutely positioned element
      spans the padding area, unlike a height:100% child would against a
-     height:0 parent). */
+     height:0 parent). No background of its own -- with one, the squash
+     animation exposed it as a flash of flat color on either side of the
+     narrowing photo (since this element stays full width while only its
+     child scales down); transparent lets the page's own background show
+     through instead, so nothing reads as a separate colored box. */
   .photo-flip-clip {
     position: absolute; inset: 0;
     border: 1px solid var(--line); border-radius: 3px;
     overflow: hidden;
-    background: var(--paper-raised);
   }
   /* This element owns the transform and NOTHING else -- no border-radius, no
      overflow:hidden, so there is nothing on it (or inside it) for Safari's
@@ -217,12 +220,18 @@
     width: 100%; height: 100%;
   }
   .photo-flip-card.is-flipping .photo-flip-inner {
-    animation: photoFlipSquash 0.56s cubic-bezier(0.45, 0.05, 0.15, 0.95);
+    animation: photoFlipSquash 0.78s cubic-bezier(0.61, 0.06, 0.31, 1);
   }
+  /* A gentle lift (translateY, purely 2D) rides along with the squash so the
+     card reads as tipping up on its edge as it turns, rather than just being
+     pinched flat -- the "seamless flip" feel, without reintroducing any 3D
+     transform (rotateX/Y, perspective, translateZ) that broke Safari before. */
   @keyframes photoFlipSquash {
-    0% { transform: scaleX(1); }
-    50% { transform: scaleX(0.02); }
-    100% { transform: scaleX(1); }
+    0%   { transform: scaleX(1)    translateY(0); }
+    38%  { transform: scaleX(0.34) translateY(-5px); }
+    50%  { transform: scaleX(0.02) translateY(-7px); }
+    62%  { transform: scaleX(0.34) translateY(-5px); }
+    100% { transform: scaleX(1)    translateY(0); }
   }
   /* Which face is visible is a plain opacity swap keyed off a data attribute
      the click handler flips once, at the midpoint of the squash animation
@@ -1688,7 +1697,7 @@
     var hint = document.getElementById('photoFlipHint');
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var noHover = window.matchMedia('(hover: none)').matches;
-    var ANIM_MS = 560;
+    var ANIM_MS = 780;
     var swapTimer = null;
 
     function toggleFlip() {
