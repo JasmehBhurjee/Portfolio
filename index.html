@@ -206,32 +206,31 @@
      animation exposed it as a flash of flat color on either side of the
      narrowing photo (since this element stays full width while only its
      child scales down); transparent lets the page's own background show
-     through instead, so nothing reads as a separate colored box. */
+     through instead, so nothing reads as a separate colored box. A soft
+     shadow grows on hover/press to sell the card lifting off the page --
+     box-shadow draws outside the border box regardless of this element's
+     own overflow:hidden, so it isn't clipped by that. */
   .photo-flip-clip {
     position: absolute; inset: 0;
     border: 1px solid var(--line); border-radius: 3px;
     overflow: hidden;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+    transition: box-shadow 0.3s ease;
+  }
+  .photo-flip-card:hover .photo-flip-clip,
+  .photo-flip-card:focus-visible .photo-flip-clip,
+  .photo-flip-card.is-flipping .photo-flip-clip {
+    box-shadow: 0 26px 46px rgba(0,0,0,0.4);
   }
   /* This element owns the transform and NOTHING else -- no border-radius, no
      overflow:hidden, so there is nothing on it (or inside it) for Safari's
-     clip-plus-transform bug to trip over. */
+     clip-plus-transform bug to trip over. Its transform is driven from JS
+     (see the profile-photo script below) rather than a CSS animation, so
+     the cursor-tilt and the flip can combine into one motion instead of
+     fighting over the same `transform` property. */
   .photo-flip-inner {
     position: relative;
     width: 100%; height: 100%;
-  }
-  .photo-flip-card.is-flipping .photo-flip-inner {
-    animation: photoFlipSquash 0.78s cubic-bezier(0.61, 0.06, 0.31, 1);
-  }
-  /* A gentle lift (translateY, purely 2D) rides along with the squash so the
-     card reads as tipping up on its edge as it turns, rather than just being
-     pinched flat -- the "seamless flip" feel, without reintroducing any 3D
-     transform (rotateX/Y, perspective, translateZ) that broke Safari before. */
-  @keyframes photoFlipSquash {
-    0%   { transform: scaleX(1)    translateY(0); }
-    38%  { transform: scaleX(0.34) translateY(-5px); }
-    50%  { transform: scaleX(0.02) translateY(-7px); }
-    62%  { transform: scaleX(0.34) translateY(-5px); }
-    100% { transform: scaleX(1)    translateY(0); }
   }
   /* Which face is visible is a plain opacity swap keyed off a data attribute
      the click handler flips once, at the midpoint of the squash animation
@@ -1682,43 +1681,69 @@
     document.querySelectorAll('.deck-viewer').forEach(setupScroller);
   })();
 
-  /* ---- profile photo: click-to-flip easter egg ----
-     Deliberately simple after repeated Safari-only failures in earlier
-     versions (see the CSS comment on .photo-flip-card for the full story).
-     No requestAnimationFrame loop, no per-frame inline style mutation, no
-     3D transform of any kind, no mouse-tilt physics on this element. The
-     squash animation is a native CSS @keyframes triggered by toggling a
-     class; the only JS job is (a) toggling that class and (b) flipping
-     which face is opaque, once, at the animation's midpoint. */
+  /* ---- profile photo: cursor-tilt "floating card" + spring-flip easter egg ----
+     After a long run of Safari-only failures, the real bug turned out to be
+     a layout bug (the card collapsing to zero height), not anything about
+     3D transforms or paint/compositing -- see the CSS comment on
+     .photo-flip-card. With that fixed, it's safe to bring the tilt physics
+     back: rotateX/rotateY tilt is the same technique already used on
+     .hero-edu below (perspective() chained directly in the transform
+     string, on an element with no border-radius/overflow/background of its
+     own), which has never been reported broken. The flip is still the
+     scaleX squash from before (no rotateY-per-face, no backface-visibility,
+     no filter on the image) -- just driven by a small spring simulation
+     instead of a fixed CSS animation, so cursor tilt and flip combine into
+     one transform and the flip gets a lively, slightly bouncy finish. */
   (function () {
     var card = document.getElementById('photoFlipCard');
-    if (!card) return;
+    var inner = document.getElementById('photoFlipInner');
+    if (!card || !inner) return;
+    var frontFace = card.querySelector('.photo-flip-front');
+    var backFace = card.querySelector('.photo-flip-back');
 
     var hint = document.getElementById('photoFlipHint');
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var noHover = window.matchMedia('(hover: none)').matches;
-    var ANIM_MS = 780;
-    var swapTimer = null;
+
+    var flipped = false;
+    var targetFlip = 0, curFlip = 0;
+    var backShowing = false;
+
+    /* Which face is visible is a plain opacity swap on two flat,
+       untransformed elements -- not CSS backface-visibility on a rotated
+       face. Swaps once the card has narrowed past the halfway point, so the
+       swap itself is hidden inside the thin part of the squash. */
+    function updateFaceVisibility(progress) {
+      var showBack = progress > 90;
+      if (showBack === backShowing) return;
+      backShowing = showBack;
+      card.setAttribute('data-showing', showBack ? 'back' : 'front');
+      if (frontFace) {
+        frontFace.style.opacity = showBack ? '0' : '1';
+        frontFace.style.pointerEvents = showBack ? 'none' : '';
+      }
+      if (backFace) {
+        backFace.style.opacity = showBack ? '1' : '0';
+        backFace.style.pointerEvents = showBack ? '' : 'none';
+      }
+    }
+
+    var FLIP_DURATION = 640;
+    var flipStart = 0, flipFrom = 0;
 
     function toggleFlip() {
-      var showingBack = card.getAttribute('data-showing') === 'back';
-      card.setAttribute('aria-pressed', showingBack ? 'false' : 'true');
-
+      flipped = !flipped;
+      card.setAttribute('aria-pressed', flipped ? 'true' : 'false');
+      targetFlip = flipped ? 180 : 0;
       if (reduceMotion) {
-        card.setAttribute('data-showing', showingBack ? 'front' : 'back');
-        return;
+        curFlip = targetFlip;
+        inner.style.transform = '';
+        updateFaceVisibility(targetFlip);
+        return; /* no easing loop running to ever clear is-flipping again */
       }
-
-      if (swapTimer) clearTimeout(swapTimer);
-      card.classList.remove('is-flipping');
-      /* Force a reflow so re-adding the class restarts the CSS animation
-         even if a previous flip's animation is still in flight. */
-      void card.offsetWidth;
+      flipFrom = curFlip;
+      flipStart = performance.now();
       card.classList.add('is-flipping');
-
-      swapTimer = setTimeout(function () {
-        card.setAttribute('data-showing', showingBack ? 'front' : 'back');
-      }, ANIM_MS / 2);
     }
     card.addEventListener('click', toggleFlip);
     card.addEventListener('keydown', function (e) {
@@ -1726,9 +1751,6 @@
         e.preventDefault();
         toggleFlip();
       }
-    });
-    card.addEventListener('animationend', function () {
-      card.classList.remove('is-flipping');
     });
 
     /* "Click!" hint follows the cursor whenever it's over the card. */
@@ -1744,6 +1766,57 @@
         hint.classList.remove('is-visible');
       });
     }
+
+    if (reduceMotion) return; /* flip only, no tilt/spring loop */
+
+    var targetRX = 0, targetRY = 0;
+    var curRX = 0, curRY = 0;
+    var MAX_TILT = 16;
+
+    if (!noHover) {
+      card.addEventListener('mousemove', function (e) {
+        var rect = card.getBoundingClientRect();
+        var px = (e.clientX - rect.left) / rect.width;
+        var py = (e.clientY - rect.top) / rect.height;
+        targetRY = (px - 0.5) * 2 * MAX_TILT;
+        targetRX = -(py - 0.5) * 2 * MAX_TILT;
+      });
+      card.addEventListener('mouseleave', function () {
+        targetRX = 0; targetRY = 0;
+      });
+    }
+
+    var TILT_LERP = 0.12;
+    /* The flip eases smoothly from its current angle to the target over a
+       fixed duration -- no overshoot, no bounce, just a calm glide that
+       settles right where it should. */
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function frame() {
+      curRX += (targetRX - curRX) * TILT_LERP;
+      curRY += (targetRY - curRY) * TILT_LERP;
+
+      if (card.classList.contains('is-flipping')) {
+        var t = Math.min(1, (performance.now() - flipStart) / FLIP_DURATION);
+        curFlip = flipFrom + (targetFlip - flipFrom) * easeInOutCubic(t);
+        if (t >= 1) {
+          curFlip = targetFlip;
+          card.classList.remove('is-flipping');
+        }
+      }
+
+      var flipScale = Math.abs(Math.cos(curFlip * Math.PI / 180));
+      var flipLift = Math.abs(Math.sin(curFlip * Math.PI / 180)) * 10;
+
+      inner.style.transform =
+        'perspective(900px) rotateX(' + curRX + 'deg) rotateY(' + curRY + 'deg) ' +
+        'scaleX(' + flipScale + ') translateY(' + (-flipLift) + 'px)';
+      updateFaceVisibility(curFlip);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   })();
 
   /* ---- education card: subtle frosted-glass micro-parallax on hover ---- */
