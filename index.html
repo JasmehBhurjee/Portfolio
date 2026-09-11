@@ -161,22 +161,29 @@
     border: 1px solid var(--scarlet); border-radius: 3px; z-index: -1;
   }
   /* ---- floating / click-to-flip profile card ----
-     Rebuilt from scratch after repeated Safari-only failures. Every earlier
-     version put the border-radius + overflow:hidden clip on the SAME element
-     (or a descendant of the same element) that was also being transformed
-     every animation frame from JavaScript. That combination -- a clipped,
-     rounded-corner box sitting inside a JS-animated transform layer -- has a
-     long history of Safari/WebKit simply never painting the clipped content
-     (Chrome has no such issue, which is exactly the split that was reported).
-     This version physically separates the two jobs onto different elements
-     so that combination can no longer occur, and it also stops using a
-     JavaScript requestAnimationFrame loop to drive the transform at all --
-     the squash/flip is a plain native CSS @keyframes animation instead,
-     which Safari's compositor handles as an ordinary declarative animation
-     rather than a stream of manual style mutations. */
+     Rebuilt from scratch after repeated Safari-only failures. The reported
+     symptom finally narrowed the real cause: on the live site the card was
+     showing only a thin grey line where its border sits, with no height at
+     all -- not a paint/compositing bug in a properly-sized box (which is
+     what every earlier fix targeted), but the box itself collapsing to (or
+     near) zero height. The prime suspect is `aspect-ratio` on a flex item:
+     .hero-right is `display:flex; flex-direction:column`, and a flex item
+     that gets its size from `aspect-ratio` alone (no explicit height) is a
+     well-known cross-engine edge case that some engines resolve to a
+     near-zero hypothetical size before the ratio is applied. Chrome papers
+     over it; this Safari apparently doesn't.
+     Fixed with the "padding-bottom percentage" box, the technique used for
+     responsive-ratio boxes since long before `aspect-ratio` existed: height
+     is forced to 0 and the real height comes from a percentage top/bottom
+     padding instead, which every layout engine (flex context or not) has
+     resolved identically for well over a decade. The rounded-corner clip
+     lives on a separate, never-transformed child (still true from the
+     previous rebuild) so that class of bug stays fixed too. */
   .photo-flip-card {
     position: relative;
-    width: 100%; aspect-ratio: 4/5;
+    width: 100%;
+    height: 0;
+    padding-bottom: 125%; /* 4:5 ratio -> height = 125% of width */
     cursor: pointer;
     outline: none;
     animation: photoFloat 5.5s ease-in-out infinite;
@@ -192,10 +199,12 @@
     .photo-flip-card { animation: none; }
   }
   /* This element owns the rounded-corner clip and NOTHING else -- it is never
-     transformed, so it never sits inside a compositing layer. */
+     transformed, so it never sits inside a compositing layer. It fills the
+     card's full padding box (inset:0 on an absolutely positioned element
+     spans the padding area, unlike a height:100% child would against a
+     height:0 parent). */
   .photo-flip-clip {
-    position: relative;
-    width: 100%; height: 100%;
+    position: absolute; inset: 0;
     border: 1px solid var(--line); border-radius: 3px;
     overflow: hidden;
     background: var(--paper-raised);
