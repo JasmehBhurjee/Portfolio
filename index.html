@@ -103,8 +103,26 @@
     line-height: 0;
     transition: color 0.15s ease, transform 0.15s ease;
   }
-  .nav-social svg { display: block; }
   .nav-social:hover { color: var(--scarlet); transform: translateY(-1px); }
+  /* Rendered as a CSS mask (flat currentColor shape) rather than an inline
+     <svg> element. header.site-nav is position:fixed with border-radius +
+     overflow:hidden + backdrop-filter -- a combination that in some WebKit
+     versions silently fails to paint a freshly-added inline SVG shape
+     inside the isolated backdrop-filter compositing layer (plain text in
+     the same nav renders fine, since it's a completely different paint
+     path). A CSS mask-image avoids that code path entirely. */
+  .icon-linkedin {
+    display: inline-block;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.75V1.75C24 .78 23.2 0 22.22 0z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.75V1.75C24 .78 23.2 0 22.22 0z'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain; mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+    flex-shrink: 0;
+  }
+  .nav-social .icon-linkedin { width: 17px; height: 17px; }
+  .contact-icon .icon-linkedin { width: 20px; height: 20px; }
   @media (max-width: 620px) {
     .nav-links { gap: 14px; }
     .nav-links .nl-num { display: none; }
@@ -616,7 +634,6 @@
     display: inline-flex; align-items: center;
     border-bottom: none; padding-bottom: 0; line-height: 0;
   }
-  .contact-links a.contact-icon svg { display: block; }
 
   footer {
     padding: 30px 0 50px; text-align: center;
@@ -641,7 +658,7 @@
       <li><a href="#contact"><span class="nl-num">05</span> Contact</a></li>
     </ul>
     <a class="nav-social" href="https://www.linkedin.com/in/jasmeh-singh-bhurjee-497149373/" target="_blank" rel="noopener" aria-label="LinkedIn profile (opens in a new tab)">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.75V1.75C24 .78 23.2 0 22.22 0z"/></svg>
+      <span class="icon-linkedin" aria-hidden="true"></span>
     </a>
   </div>
 </header>
@@ -1082,7 +1099,7 @@
           <span class="tb-row"><a href="mailto:bhurjee.2@osu.edu">bhurjee.2@osu.edu</a><button class="copy-btn" data-copy="bhurjee.2@osu.edu" type="button">Copy</button></span>
           <span class="tb-row"><a href="tel:+16149748591">(614) 974-8591</a><button class="copy-btn" data-copy="(614) 974-8591" type="button">Copy</button></span>
           <a class="contact-icon" href="https://www.linkedin.com/in/jasmeh-singh-bhurjee-497149373/" target="_blank" rel="noopener" aria-label="LinkedIn profile (opens in a new tab)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.03-1.85-3.03-1.86 0-2.14 1.45-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.75V1.75C24 .78 23.2 0 22.22 0z"/></svg>
+            <span class="icon-linkedin" aria-hidden="true"></span>
           </a>
           <span class="mono" style="color:var(--ink-muted); font-size:0.88rem;">Dublin, OH</span>
         </div>
