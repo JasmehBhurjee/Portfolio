@@ -684,6 +684,59 @@
   @media (prefers-reduced-motion: reduce) {
     .nimpop-dot, .nimpop-toast { transition: opacity 0.3s ease; }
   }
+
+  /* ---------- ELEPHANT WALK-BY (fires right after the "Hi Nimy" pop-up) ----------
+     Three separate elements share the motion so their transforms never collide:
+     the outer .nimwalk-elephant owns horizontal travel via the `left` property
+     (not transform), the inner .nimwalk-bob owns the vertical walking bob via
+     transform:translateY, and .nimwalk-emoji owns a static transform:scaleX(-1)
+     flip so the glyph faces its direction of travel. Each is its own element,
+     so none of those transforms ever have to be combined into one string. */
+  .nimwalk-elephant {
+    position: fixed; bottom: 22px; left: -80px; z-index: 402;
+    display: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .nimwalk-elephant.nimwalk-active {
+    display: block;
+    animation: nimwalkAcross 6.2s linear forwards;
+  }
+  .nimwalk-bob { display: block; animation: nimwalkBob 0.5s ease-in-out infinite; }
+  .nimwalk-emoji {
+    display: block; font-size: 46px; line-height: 1; transform: scaleX(-1);
+    filter: drop-shadow(0 8px 10px rgba(0,0,0,0.4));
+  }
+  .nimwalk-bubble {
+    position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+    background: #fff; color: #1c1e22;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+    padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .nimwalk-bubble::after {
+    content: ''; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: #fff;
+  }
+  .nimwalk-elephant.nimwalk-active .nimwalk-bubble { opacity: 1; }
+  @keyframes nimwalkAcross { from { left: -80px; } to { left: calc(100% + 80px); } }
+  @keyframes nimwalkBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  .nimwalk-kiss {
+    position: fixed; z-index: 403; font-size: 22px; pointer-events: none;
+    animation: nimwalkKiss 1s ease-out forwards;
+  }
+  @keyframes nimwalkKiss {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    15% { opacity: 1; transform: translate(-50%, -75%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -170%) scale(1); }
+  }
+  @media (max-width: 480px) {
+    .nimwalk-emoji { font-size: 36px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nimwalk-elephant.nimwalk-active { animation: none; left: 50%; transform: translateX(-50%); }
+    .nimwalk-bob { animation: none; }
+  }
 </style>
 
 <canvas id="pixelCanvas" aria-hidden="true"></canvas>
@@ -1167,6 +1220,11 @@
 
 <div class="nimpop-toast" id="nimToast" aria-live="polite" aria-hidden="true">Hi Nimy <span aria-hidden="true">&#128075;</span></div>
 <canvas class="nimpop-canvas" id="nimCanvas" aria-hidden="true"></canvas>
+
+<div class="nimwalk-elephant" id="nimElephant" role="button" tabindex="-1" aria-hidden="true" aria-label="A friendly elephant. Click it for a surprise.">
+  <div class="nimwalk-bubble">Bye Nimy</div>
+  <span class="nimwalk-bob"><span class="nimwalk-emoji" aria-hidden="true">&#128024;</span></span>
+</div>
 
 <script>
   (function () {
@@ -1780,6 +1838,56 @@
     var particles = [];
     var rafId = null, toastTimer = null, runId = 0;
 
+    var elephant = document.getElementById('nimElephant');
+    var elephantHideTimer = null;
+
+    function spawnKiss(cx, cy) {
+      var el = document.createElement('div');
+      el.className = 'nimwalk-kiss';
+      el.textContent = String.fromCodePoint(0x1F48B); /* kiss mark, set as a codepoint (not a literal
+        byte sequence) so it can't be corrupted by charset guessing when this fragment is opened
+        without an explicit <meta charset> -- the same reason every other emoji in this file is
+        written as an HTML numeric entity rather than a literal character */
+      el.style.left = cx + 'px';
+      el.style.top = cy + 'px';
+      document.body.appendChild(el);
+      var cleanup = function () { if (el.parentNode) el.parentNode.removeChild(el); };
+      el.addEventListener('animationend', cleanup);
+      setTimeout(cleanup, 1300);
+    }
+
+    function elephantKiss() {
+      if (!elephant) return;
+      var rect = elephant.getBoundingClientRect();
+      spawnKiss(rect.left + rect.width * 0.72, rect.top + rect.height * 0.18);
+    }
+
+    function walkElephant() {
+      if (!elephant) return;
+      clearTimeout(elephantHideTimer);
+      elephant.classList.remove('nimwalk-active');
+      void elephant.offsetWidth; /* force reflow so the CSS animation restarts on repeat triggers */
+      elephant.classList.add('nimwalk-active');
+      elephant.setAttribute('aria-hidden', 'false');
+      elephant.setAttribute('tabindex', '0');
+      var walkMs = reduceMotion ? 3200 : 6200;
+      elephantHideTimer = setTimeout(function () {
+        elephant.classList.remove('nimwalk-active');
+        elephant.setAttribute('aria-hidden', 'true');
+        elephant.setAttribute('tabindex', '-1');
+      }, walkMs);
+    }
+
+    if (elephant) {
+      elephant.addEventListener('click', elephantKiss);
+      elephant.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          elephantKiss();
+        }
+      });
+    }
+
     function resizeCanvas() {
       canvas.width = Math.round(window.innerWidth * dpr);
       canvas.height = Math.round(window.innerHeight * dpr);
@@ -1883,6 +1991,8 @@
         toast.classList.remove('nimpop-show');
         toast.setAttribute('aria-hidden', 'true');
       }, 2000);
+
+      setTimeout(walkElephant, 450);
 
       if (reduceMotion || !ctx) return;
       runId++;
