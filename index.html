@@ -760,12 +760,35 @@
     display: none; pointer-events: none;
   }
   .nimrace-horse.nimrace-active { display: block; animation: nimraceLoop 6s linear forwards; }
-  .nimrace-bob { display: block; animation: nimraceBob 0.26s ease-in-out infinite; }
+  /* A plain up/down bob read as robotic. Real gallop footage has an uneven,
+     lopsided rhythm -- gather, launch, suspend, land -- so the cycle below
+     mixes bounce height, a forward/back lean, and a light stretch instead of
+     one symmetric sine wave. Pivoting from the bottom (feet) rather than the
+     center makes the lean read as the body rocking over planted legs. */
+  .nimrace-bob {
+    display: block; transform-origin: 50% 100%;
+    animation: nimraceBob 0.42s cubic-bezier(.45,0,.55,1) infinite;
+  }
   .nimrace-face { display: block; animation: nimraceFace 6s linear forwards; }
   .nimrace-emoji {
     display: block; font-size: 40px; line-height: 1; transform: scaleX(-1);
     filter: drop-shadow(0 6px 8px rgba(0,0,0,0.35));
   }
+  .nimrace-dust {
+    position: fixed; z-index: 401; border-radius: 50%; opacity: 0; pointer-events: none;
+    left: 5%; top: 5%;
+    background: radial-gradient(circle, rgba(200,178,146,0.6), rgba(200,178,146,0) 72%);
+  }
+  .nimrace-dust-a { width: 10px; height: 10px; }
+  .nimrace-dust-b { width: 8px; height: 8px; }
+  .nimrace-dust-c { width: 6px; height: 6px; }
+  /* Each puff traces the identical perimeter path (nimraceLoop) as the horse but
+     starts a beat later, so at any instant it's sitting at an earlier point on
+     the same path -- i.e. visibly behind the horse -- with no JS position math
+     needed. A second, staggered, looping fade/grow gives the puff-of-dust look. */
+  .nimrace-horse.nimrace-active .nimrace-dust-a { animation: nimraceLoop 6s linear 0.1s forwards, nimraceDustFade 0.5s ease-out 0s infinite; }
+  .nimrace-horse.nimrace-active .nimrace-dust-b { animation: nimraceLoop 6s linear 0.2s forwards, nimraceDustFade 0.5s ease-out 0.06s infinite; }
+  .nimrace-horse.nimrace-active .nimrace-dust-c { animation: nimraceLoop 6s linear 0.32s forwards, nimraceDustFade 0.5s ease-out 0.12s infinite; }
   @keyframes nimraceLoop {
     0%   { left: 5%;  top: 5%; }
     25%  { left: 95%; top: 5%; }
@@ -773,7 +796,18 @@
     75%  { left: 5%;  top: 95%; }
     100% { left: 5%;  top: 5%; }
   }
-  @keyframes nimraceBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes nimraceDustFade {
+    0%   { opacity: 0.5; transform: translateY(26px) scale(0.6); }
+    100% { opacity: 0;   transform: translateY(26px) scale(1.6); }
+  }
+  @keyframes nimraceBob {
+    0%   { transform: translateY(0)    rotate(-3deg) scaleX(1);    }
+    18%  { transform: translateY(-8px) rotate(6deg)  scaleX(0.94); }
+    38%  { transform: translateY(-1px) rotate(-4deg) scaleX(1.05); }
+    55%  { transform: translateY(-9px) rotate(7deg)  scaleX(0.94); }
+    75%  { transform: translateY(-2px) rotate(-5deg) scaleX(1.04); }
+    100% { transform: translateY(0)    rotate(-3deg) scaleX(1);    }
+  }
   @keyframes nimraceFace {
     0%     { transform: scaleX(-1); }
     49.9%  { transform: scaleX(-1); }
@@ -1276,6 +1310,9 @@
 </div>
 
 <div class="nimrace-horse" id="nimHorse" aria-hidden="true">
+  <span class="nimrace-dust nimrace-dust-a" aria-hidden="true"></span>
+  <span class="nimrace-dust nimrace-dust-b" aria-hidden="true"></span>
+  <span class="nimrace-dust nimrace-dust-c" aria-hidden="true"></span>
   <span class="nimrace-bob"><span class="nimrace-face"><span class="nimrace-emoji" aria-hidden="true">&#128014;</span></span></span>
 </div>
 
