@@ -747,19 +747,21 @@
     .nimwalk-bob { animation: none; }
   }
 
-  /* ---------- HORSE RACING A LAP AROUND THE SCREEN (fires alongside the elephant) ----------
-     Same three-elements-own-three-transforms split as the elephant, for the same reason:
-     the outer .nimrace-horse owns the perimeter path via left/top percentages (not transform,
-     so a fixed-position element's offsets resolve against the viewport with no JS math needed),
-     .nimrace-bob owns the galloping bounce via transform:translateY, and .nimrace-face owns a
-     scaleX flip timed to face the direction of travel -- three separate transform owners that
-     never have to be combined into one animation. Purely decorative (pointer-events:none) --
-     unlike the elephant, nothing happens if you click it. */
+  /* ---------- HORSE RACING BOTTOM-LEFT TO TOP-RIGHT (fires alongside the elephant) ----------
+     Same "each element owns one transform" split as the elephant/dust patterns above: the
+     outer .nimrace-horse owns the diagonal path via left/top percentages (not transform, so a
+     fixed-position element's offsets resolve against the viewport with no JS math needed), and
+     .nimrace-bob owns the galloping bounce/lean/stretch via transform. Direction is now
+     constant (always up-and-right), so the emoji's flip is a static rule, not an animation.
+     Clicking it freezes every animated layer in place (JS sets animation-play-state:paused on
+     each) and drops a poop -- see the physics-driven .nimrace-poop below. */
   .nimrace-horse {
-    position: fixed; z-index: 402; left: 5%; top: 5%;
-    display: none; pointer-events: none;
+    position: fixed; z-index: 402; left: 5%; top: 90%;
+    display: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .nimrace-horse.nimrace-active { display: block; animation: nimraceLoop 6s linear forwards; }
+  .nimrace-horse::before { content: ''; position: absolute; inset: -22px -30px; } /* oversized tap target, same fix as the elephant */
+  .nimrace-horse:focus-visible { outline: 2px solid var(--copper); outline-offset: 4px; border-radius: 8px; }
+  .nimrace-horse.nimrace-active { display: block; animation: nimraceLoop 4.6s linear forwards; }
   /* A plain up/down bob read as robotic. Real gallop footage has an uneven,
      lopsided rhythm -- gather, launch, suspend, land -- so the cycle below
      mixes bounce height, a forward/back lean, and a light stretch instead of
@@ -769,36 +771,35 @@
     display: block; transform-origin: 50% 100%;
     animation: nimraceBob 0.42s cubic-bezier(.45,0,.55,1) infinite;
   }
-  .nimrace-face { display: block; animation: nimraceFace 6s linear forwards; }
   .nimrace-emoji {
-    display: block; font-size: 40px; line-height: 1; transform: scaleX(-1);
+    display: block; font-size: 40px; line-height: 1; transform: scaleX(-1); /* facing up-right, the constant direction of travel */
     filter: drop-shadow(0 6px 8px rgba(0,0,0,0.35));
   }
+  /* Bigger, more opaque, one more puff than before, per "more prominent". */
   .nimrace-dust {
     position: fixed; z-index: 401; border-radius: 50%; opacity: 0; pointer-events: none;
-    left: 5%; top: 5%;
-    background: radial-gradient(circle, rgba(200,178,146,0.6), rgba(200,178,146,0) 72%);
+    left: 5%; top: 90%;
+    background: radial-gradient(circle, rgba(214,190,150,0.88), rgba(214,190,150,0.35) 55%, rgba(214,190,150,0) 78%);
   }
-  .nimrace-dust-a { width: 10px; height: 10px; }
-  .nimrace-dust-b { width: 8px; height: 8px; }
-  .nimrace-dust-c { width: 6px; height: 6px; }
-  /* Each puff traces the identical perimeter path (nimraceLoop) as the horse but
-     starts a beat later, so at any instant it's sitting at an earlier point on
-     the same path -- i.e. visibly behind the horse -- with no JS position math
-     needed. A second, staggered, looping fade/grow gives the puff-of-dust look. */
-  .nimrace-horse.nimrace-active .nimrace-dust-a { animation: nimraceLoop 6s linear 0.1s forwards, nimraceDustFade 0.5s ease-out 0s infinite; }
-  .nimrace-horse.nimrace-active .nimrace-dust-b { animation: nimraceLoop 6s linear 0.2s forwards, nimraceDustFade 0.5s ease-out 0.06s infinite; }
-  .nimrace-horse.nimrace-active .nimrace-dust-c { animation: nimraceLoop 6s linear 0.32s forwards, nimraceDustFade 0.5s ease-out 0.12s infinite; }
+  .nimrace-dust-a { width: 24px; height: 24px; }
+  .nimrace-dust-b { width: 19px; height: 19px; }
+  .nimrace-dust-c { width: 15px; height: 15px; }
+  .nimrace-dust-d { width: 11px; height: 11px; }
+  /* Each puff traces the identical diagonal path (nimraceLoop) as the horse but starts a beat
+     later, so at any instant it's sitting at an earlier point on the same path -- i.e. visibly
+     behind the horse -- with no JS position math needed. A second, staggered, looping fade/grow
+     gives the puff-of-dust look. */
+  .nimrace-horse.nimrace-active .nimrace-dust-a { animation: nimraceLoop 4.6s linear 0.08s forwards, nimraceDustFade 0.5s ease-out 0s infinite; }
+  .nimrace-horse.nimrace-active .nimrace-dust-b { animation: nimraceLoop 4.6s linear 0.16s forwards, nimraceDustFade 0.5s ease-out 0.06s infinite; }
+  .nimrace-horse.nimrace-active .nimrace-dust-c { animation: nimraceLoop 4.6s linear 0.26s forwards, nimraceDustFade 0.5s ease-out 0.12s infinite; }
+  .nimrace-horse.nimrace-active .nimrace-dust-d { animation: nimraceLoop 4.6s linear 0.38s forwards, nimraceDustFade 0.5s ease-out 0.18s infinite; }
   @keyframes nimraceLoop {
-    0%   { left: 5%;  top: 5%; }
-    25%  { left: 95%; top: 5%; }
-    50%  { left: 95%; top: 95%; }
-    75%  { left: 5%;  top: 95%; }
-    100% { left: 5%;  top: 5%; }
+    0%   { left: 5%;  top: 90%; }
+    100% { left: 90%; top: 5%; }
   }
   @keyframes nimraceDustFade {
-    0%   { opacity: 0.5; transform: translateY(26px) scale(0.6); }
-    100% { opacity: 0;   transform: translateY(26px) scale(1.6); }
+    0%   { opacity: 0.88; transform: translateY(16px) scale(0.55); }
+    100% { opacity: 0;    transform: translateY(16px) scale(2); }
   }
   @keyframes nimraceBob {
     0%   { transform: translateY(0)    rotate(-3deg) scaleX(1);    }
@@ -808,17 +809,46 @@
     75%  { transform: translateY(-2px) rotate(-5deg) scaleX(1.04); }
     100% { transform: translateY(0)    rotate(-3deg) scaleX(1);    }
   }
-  @keyframes nimraceFace {
-    0%     { transform: scaleX(-1); }
-    49.9%  { transform: scaleX(-1); }
-    50%    { transform: scaleX(1); }
-    100%   { transform: scaleX(1); }
+
+  /* ---------- POOP: physics fall to the "floor" (bottom of the window), then click to blow up ----------
+     A lightweight JS gravity simulation (not a CSS keyframe) drives the fall, since the distance
+     to the floor is different every time (depends on where the horse was clicked) and it has to
+     actually stop at the bottom edge and stay there, however tall the window is. */
+  .nimrace-poop {
+    position: fixed; z-index: 403; font-size: 68px; line-height: 1;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 10px 14px rgba(0,0,0,0.4));
   }
+  .nimrace-poop-landed { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .nimrace-poop-landed::before { content: ''; position: absolute; inset: -16px; } /* bigger tap target */
+  .nimrace-poop-landed:focus-visible { outline: 2px solid var(--copper); outline-offset: 4px; border-radius: 50%; }
+  .nimrace-poop.nimrace-poop-pop {
+    animation: nimracePoopPop 0.35s ease-in forwards;
+  }
+  @keyframes nimracePoopPop {
+    0%   { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1.6) rotate(12deg); }
+  }
+  .nimrace-blowup {
+    position: fixed; left: 50%; top: 42%; z-index: 404; pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.4) rotate(-6deg);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 800; font-size: clamp(1.7rem, 6.2vw, 3.4rem); letter-spacing: 0.03em;
+    text-transform: uppercase; text-align: center; white-space: nowrap;
+    color: #8B5A2B; -webkit-text-stroke: 3px #F3D9B1;
+    text-shadow: 0 6px 0 rgba(0,0,0,0.18), 0 12px 26px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.45s cubic-bezier(.34,1.56,.64,1);
+  }
+  .nimrace-blowup.nimrace-blowup-show { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-2deg); }
   @media (max-width: 480px) {
     .nimrace-emoji { font-size: 30px; }
+    .nimrace-poop { font-size: 50px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .nimrace-horse { display: none !important; }
+    .nimrace-poop.nimrace-poop-pop { animation: none; opacity: 0; }
+    .nimrace-blowup { transition: opacity 0.3s ease; }
   }
 </style>
 
@@ -1309,11 +1339,12 @@
   <span class="nimwalk-bob"><span class="nimwalk-emoji" aria-hidden="true">&#128024;</span></span>
 </div>
 
-<div class="nimrace-horse" id="nimHorse" aria-hidden="true">
+<div class="nimrace-horse" id="nimHorse" role="button" tabindex="-1" aria-hidden="true" aria-label="A racing horse. Click it to make it stop.">
   <span class="nimrace-dust nimrace-dust-a" aria-hidden="true"></span>
   <span class="nimrace-dust nimrace-dust-b" aria-hidden="true"></span>
   <span class="nimrace-dust nimrace-dust-c" aria-hidden="true"></span>
-  <span class="nimrace-bob"><span class="nimrace-face"><span class="nimrace-emoji" aria-hidden="true">&#128014;</span></span></span>
+  <span class="nimrace-dust nimrace-dust-d" aria-hidden="true"></span>
+  <span class="nimrace-bob"><span class="nimrace-emoji" aria-hidden="true">&#128014;</span></span>
 </div>
 
 <script>
@@ -1974,15 +2005,145 @@
 
     var horse = document.getElementById('nimHorse');
     var horseHideTimer = null;
+    var horseStopped = false;
+
+    function horseAnimatedLayers() {
+      var layers = [horse, horse.querySelector('.nimrace-bob')];
+      var dust = horse.querySelectorAll('.nimrace-dust');
+      for (var i = 0; i < dust.length; i++) layers.push(dust[i]);
+      return layers;
+    }
+    function setHorsePlayState(state) {
+      horseAnimatedLayers().forEach(function (el) { if (el) el.style.animationPlayState = state; });
+    }
+
+    function explodePoop(poopEl, x, y) {
+      var text = document.createElement('div');
+      text.className = 'nimrace-blowup';
+      text.textContent = 'poop butt lol';
+      document.body.appendChild(text);
+      if (reduceMotion) {
+        text.classList.add('nimrace-blowup-show');
+      } else {
+        requestAnimationFrame(function () { text.classList.add('nimrace-blowup-show'); });
+      }
+      setTimeout(function () {
+        text.classList.remove('nimrace-blowup-show');
+        setTimeout(function () { if (text.parentNode) text.parentNode.removeChild(text); }, 400);
+      }, 2200);
+
+      if (reduceMotion) {
+        if (poopEl.parentNode) poopEl.parentNode.removeChild(poopEl);
+        return;
+      }
+      poopEl.classList.add('nimrace-poop-pop');
+      setTimeout(function () { if (poopEl.parentNode) poopEl.parentNode.removeChild(poopEl); }, 380);
+    }
+
+    function spawnPoop(x, y) {
+      var el = document.createElement('div');
+      el.className = 'nimrace-poop';
+      el.textContent = String.fromCodePoint(0x1F4A9); /* set as a codepoint, not a literal byte
+        sequence, so it can't be corrupted by charset guessing -- same reason as the kiss emoji */
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      document.body.appendChild(el);
+
+      function makeClickable(landedY) {
+        el.style.top = landedY + 'px';
+        el.classList.add('nimrace-poop-landed');
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-label', 'A pile of poop. Click it.');
+        var pressEvent = window.PointerEvent ? 'pointerdown' : 'click';
+        el.addEventListener(pressEvent, function (e) {
+          e.stopPropagation();
+          explodePoop(el, e.clientX, e.clientY);
+        });
+        el.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            var rect = el.getBoundingClientRect();
+            explodePoop(el, rect.left + rect.width / 2, rect.top);
+          }
+        });
+      }
+
+      var floorPad = 10;
+      var floorY = window.innerHeight - floorPad;
+      if (reduceMotion) {
+        makeClickable(floorY);
+        return;
+      }
+
+      /* Simple gravity + floor-bounce simulation: the window itself is the container, so the
+         resting position depends on the actual viewport height, not a fixed distance -- a plain
+         CSS keyframe fall can't know that in advance, but a physics step each frame can. */
+      var vy = 0, posY = y, gravity = 2400, restitution = 0.32, lastTs = null, settled = false;
+      function step(ts) {
+        if (lastTs === null) lastTs = ts;
+        var dt = Math.min((ts - lastTs) / 1000, 0.032);
+        lastTs = ts;
+        vy += gravity * dt;
+        posY += vy * dt;
+        if (posY >= floorY) {
+          posY = floorY;
+          vy = -vy * restitution;
+          if (Math.abs(vy) < 110) settled = true;
+        }
+        el.style.top = posY + 'px';
+        if (!settled) requestAnimationFrame(step);
+        else makeClickable(floorY);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function horseStop(x, y) {
+      if (!horse || horseStopped) return;
+      horseStopped = true;
+      setHorsePlayState('paused');
+      if (typeof x !== 'number') {
+        var rect = horse.getBoundingClientRect();
+        x = rect.left + rect.width * 0.3;
+        y = rect.top + rect.height * 0.85;
+      }
+      spawnPoop(x, y);
+      clearTimeout(horseHideTimer);
+      horseHideTimer = setTimeout(function () {
+        horse.classList.remove('nimrace-active');
+        horse.setAttribute('aria-hidden', 'true');
+        horse.setAttribute('tabindex', '-1');
+      }, 1600);
+    }
+
     function raceHorse() {
       if (!horse || reduceMotion) return;
       clearTimeout(horseHideTimer);
+      horseStopped = false;
       horse.classList.remove('nimrace-active');
       void horse.offsetWidth; /* force reflow so the loop restarts on repeat triggers */
+      setHorsePlayState('running'); /* clear any pause left over from a previous stop-and-poop */
       horse.classList.add('nimrace-active');
+      horse.setAttribute('aria-hidden', 'false');
+      horse.setAttribute('tabindex', '0');
       horseHideTimer = setTimeout(function () {
         horse.classList.remove('nimrace-active');
-      }, 6200);
+        horse.setAttribute('aria-hidden', 'true');
+        horse.setAttribute('tabindex', '-1');
+      }, 4800);
+    }
+
+    if (horse) {
+      var horsePressEvent = window.PointerEvent ? 'pointerdown' : 'click';
+      horse.addEventListener(horsePressEvent, function (e) {
+        horseStop(e.clientX, e.clientY);
+      });
+      horse.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          horseStop();
+        }
+      });
     }
 
     if (elephant) {
