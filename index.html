@@ -696,9 +696,17 @@
     position: fixed; bottom: 22px; left: -80px; z-index: 402;
     display: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
+  /* Invisible, generously oversized tap target -- the visible glyph is small and
+     constantly moving, so a hit region limited to its own paint area is easy to
+     miss. This extends the clickable/tappable area well beyond what's drawn,
+     without affecting layout (pseudo-element, no content, absolutely positioned
+     off the real box). */
+  .nimwalk-elephant::before {
+    content: ''; position: absolute; inset: -22px -30px;
+  }
   .nimwalk-elephant.nimwalk-active {
     display: block;
-    animation: nimwalkAcross 6.2s linear forwards;
+    animation: nimwalkAcross 7.5s linear forwards;
   }
   .nimwalk-bob { display: block; animation: nimwalkBob 0.5s ease-in-out infinite; }
   .nimwalk-emoji {
@@ -720,6 +728,7 @@
   }
   .nimwalk-elephant.nimwalk-active .nimwalk-bubble { opacity: 1; }
   @keyframes nimwalkAcross { from { left: -80px; } to { left: calc(100% + 80px); } }
+  .nimwalk-elephant:focus-visible { outline: 2px solid var(--copper); outline-offset: 4px; border-radius: 8px; }
   @keyframes nimwalkBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
   .nimwalk-kiss {
     position: fixed; z-index: 403; font-size: 22px; pointer-events: none;
@@ -1856,10 +1865,14 @@
       setTimeout(cleanup, 1300);
     }
 
-    function elephantKiss() {
+    function elephantKiss(x, y) {
       if (!elephant) return;
-      var rect = elephant.getBoundingClientRect();
-      spawnKiss(rect.left + rect.width * 0.72, rect.top + rect.height * 0.18);
+      if (typeof x !== 'number') {
+        var rect = elephant.getBoundingClientRect();
+        x = rect.left + rect.width * 0.72;
+        y = rect.top + rect.height * 0.18;
+      }
+      spawnKiss(x, y);
     }
 
     function walkElephant() {
@@ -1870,7 +1883,7 @@
       elephant.classList.add('nimwalk-active');
       elephant.setAttribute('aria-hidden', 'false');
       elephant.setAttribute('tabindex', '0');
-      var walkMs = reduceMotion ? 3200 : 6200;
+      var walkMs = reduceMotion ? 3200 : 7500;
       elephantHideTimer = setTimeout(function () {
         elephant.classList.remove('nimwalk-active');
         elephant.setAttribute('aria-hidden', 'true');
@@ -1879,7 +1892,17 @@
     }
 
     if (elephant) {
-      elephant.addEventListener('click', elephantKiss);
+      /* "click" requires the press AND release to land on the same element --
+         on a fast, continuously CSS-animated target, the element can drift out
+         from under the cursor in the time between press and release, so clicks
+         silently fail to fire. "pointerdown" checks hit-position at a single
+         instant (the press), which is immune to that and covers mouse, touch,
+         and pen uniformly. Falls back to click for the rare browser without
+         pointer events. */
+      var pressEvent = window.PointerEvent ? 'pointerdown' : 'click';
+      elephant.addEventListener(pressEvent, function (e) {
+        elephantKiss(e.clientX, e.clientY);
+      });
       elephant.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
           e.preventDefault();
