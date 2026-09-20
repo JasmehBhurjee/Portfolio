@@ -820,7 +820,7 @@
     filter: drop-shadow(0 10px 14px rgba(0,0,0,0.4));
   }
   .nimrace-poop-landed { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .nimrace-poop-landed::before { content: ''; position: absolute; inset: -16px; } /* bigger tap target */
+  .nimrace-poop-landed::before { content: ''; position: absolute; inset: -26px; } /* bigger tap target */
   .nimrace-poop-landed:focus-visible { outline: 2px solid var(--copper); outline-offset: 4px; border-radius: 50%; }
   .nimrace-poop.nimrace-poop-pop {
     animation: nimracePoopPop 0.35s ease-in forwards;
@@ -2042,37 +2042,47 @@
 
     function spawnPoop(x, y) {
       var el = document.createElement('div');
-      el.className = 'nimrace-poop';
+      /* Clickable from the instant it appears -- not gated behind the bounce physics settling --
+         so an eager click mid-fall/mid-bounce is never silently dropped. */
+      el.className = 'nimrace-poop nimrace-poop-landed';
       el.textContent = String.fromCodePoint(0x1F4A9); /* set as a codepoint, not a literal byte
         sequence, so it can't be corrupted by charset guessing -- same reason as the kiss emoji */
       el.style.left = x + 'px';
       el.style.top = y + 'px';
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', 'A pile of poop. Click it.');
       document.body.appendChild(el);
 
-      function makeClickable(landedY) {
-        el.style.top = landedY + 'px';
-        el.classList.add('nimrace-poop-landed');
-        el.setAttribute('role', 'button');
-        el.setAttribute('tabindex', '0');
-        el.setAttribute('aria-label', 'A pile of poop. Click it.');
-        var pressEvent = window.PointerEvent ? 'pointerdown' : 'click';
-        el.addEventListener(pressEvent, function (e) {
-          e.stopPropagation();
-          explodePoop(el, e.clientX, e.clientY);
-        });
-        el.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-            e.preventDefault();
-            var rect = el.getBoundingClientRect();
-            explodePoop(el, rect.left + rect.width / 2, rect.top);
-          }
-        });
+      var exploded = false;
+      function triggerExplode(cx, cy) {
+        if (exploded) return;
+        exploded = true;
+        explodePoop(el, cx, cy);
       }
 
-      var floorPad = 10;
-      var floorY = window.innerHeight - floorPad;
+      var pressEvent = window.PointerEvent ? 'pointerdown' : 'click';
+      el.addEventListener(pressEvent, function (e) {
+        e.stopPropagation();
+        triggerExplode(e.clientX, e.clientY);
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          var rect = el.getBoundingClientRect();
+          triggerExplode(rect.left + rect.width / 2, rect.top);
+        }
+      });
+
+      /* "top" is the element's TOP edge, so the floor target has to leave room for the whole
+         glyph's height above the bottom of the screen -- otherwise most of it lands below the
+         fold and only a thin sliver is visible/clickable. Measure the real rendered height
+         (handles the smaller mobile font-size too) rather than assuming a fixed size. */
+      var floorPad = 18;
+      var poopHeight = el.offsetHeight || 68;
+      var floorY = window.innerHeight - floorPad - poopHeight;
       if (reduceMotion) {
-        makeClickable(floorY);
+        el.style.top = floorY + 'px';
         return;
       }
 
@@ -2081,6 +2091,8 @@
          CSS keyframe fall can't know that in advance, but a physics step each frame can. */
       var vy = 0, posY = y, gravity = 2400, restitution = 0.32, lastTs = null, settled = false;
       function step(ts) {
+        if (exploded) return; /* a click mid-fall already handed off to explodePoop's own
+          pop/removal animation -- stop fighting it with further position updates */
         if (lastTs === null) lastTs = ts;
         var dt = Math.min((ts - lastTs) / 1000, 0.032);
         lastTs = ts;
@@ -2093,7 +2105,6 @@
         }
         el.style.top = posY + 'px';
         if (!settled) requestAnimationFrame(step);
-        else makeClickable(floorY);
       }
       requestAnimationFrame(step);
     }
