@@ -643,17 +643,23 @@
   .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
   .reveal.in { opacity: 1; transform: translateY(0); }
 
-  /* ---------- HIDDEN "HI NIMY" POP-UP (click the dot in "in") ---------- */
+  /* ---------- HIDDEN "HI NIMY" POP-UP (click the dot in "in") ----------
+     The clickable dot IS the real "i" glyph -- not a separate absolutely
+     positioned circle laid on top of it. An overlay circle has to guess at
+     font metrics (ascent, x-height, glyph width) to line up with the
+     browser's own rendering of the dot, and that guess is what drifted
+     visibly off to the side/above the real tittle. Animating color/scale
+     on the actual letter is pixel-perfect by construction and reads as
+     invisible at rest, since there's nothing extra in the DOM to misalign. */
   .nimpop-hot { position: relative; display: inline-block; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .nimpop-hot:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; border-radius: 2px; }
   .nimpop-dot {
-    position: absolute; left: 50%; top: -0.05em; width: 0.15em; height: 0.15em;
-    border-radius: 50%; background: currentColor; transform: translate(-50%, 0) scale(1);
-    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), background-color 0.3s ease, box-shadow 0.3s ease;
+    display: inline-block;
+    transition: color 0.3s ease, transform 0.35s cubic-bezier(.34,1.56,.64,1), text-shadow 0.3s ease;
   }
-  .nimpop-hot:hover .nimpop-dot { transform: translate(-50%, -0.06em) scale(1.2); }
+  .nimpop-hot:hover .nimpop-dot { transform: translateY(-1px) scale(1.15); }
   .nimpop-dot.nimpop-pressed {
-    background: #FF7AC6; box-shadow: 0 0 10px rgba(255,122,198,0.75);
+    color: #FF7AC6; text-shadow: 0 0 8px rgba(255,122,198,0.75);
   }
 
   .nimpop-canvas {
@@ -1129,7 +1135,7 @@
   <section id="contact">
     <div class="wrap">
       <div class="contact-card reveal">
-        <h2>Get <span class="nimpop-hot" id="nimHot" role="button" tabindex="0" aria-label="A little something extra">i<span class="nimpop-dot" id="nimDot" aria-hidden="true"></span>n</span> touch</h2>
+        <h2>Get <span class="nimpop-hot" id="nimHot" role="button" tabindex="0" aria-label="A little something extra"><span class="nimpop-dot" id="nimDot">i</span>n</span> touch</h2>
         <p>I'm looking for opportunities where I can keep working across both sides of this: hands-on engineering and structured problem solving. Reach out any time.</p>
         <div class="contact-links">
           <span class="tb-row"><a href="mailto:bhurjee.2@osu.edu">bhurjee.2@osu.edu</a><button class="copy-btn" data-copy="bhurjee.2@osu.edu" type="button">Copy</button></span>
