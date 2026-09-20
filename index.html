@@ -746,6 +746,46 @@
     .nimwalk-elephant.nimwalk-active { animation: none; left: 50%; transform: translateX(-50%); }
     .nimwalk-bob { animation: none; }
   }
+
+  /* ---------- HORSE RACING A LAP AROUND THE SCREEN (fires alongside the elephant) ----------
+     Same three-elements-own-three-transforms split as the elephant, for the same reason:
+     the outer .nimrace-horse owns the perimeter path via left/top percentages (not transform,
+     so a fixed-position element's offsets resolve against the viewport with no JS math needed),
+     .nimrace-bob owns the galloping bounce via transform:translateY, and .nimrace-face owns a
+     scaleX flip timed to face the direction of travel -- three separate transform owners that
+     never have to be combined into one animation. Purely decorative (pointer-events:none) --
+     unlike the elephant, nothing happens if you click it. */
+  .nimrace-horse {
+    position: fixed; z-index: 402; left: 5%; top: 5%;
+    display: none; pointer-events: none;
+  }
+  .nimrace-horse.nimrace-active { display: block; animation: nimraceLoop 6s linear forwards; }
+  .nimrace-bob { display: block; animation: nimraceBob 0.26s ease-in-out infinite; }
+  .nimrace-face { display: block; animation: nimraceFace 6s linear forwards; }
+  .nimrace-emoji {
+    display: block; font-size: 40px; line-height: 1; transform: scaleX(-1);
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,0.35));
+  }
+  @keyframes nimraceLoop {
+    0%   { left: 5%;  top: 5%; }
+    25%  { left: 95%; top: 5%; }
+    50%  { left: 95%; top: 95%; }
+    75%  { left: 5%;  top: 95%; }
+    100% { left: 5%;  top: 5%; }
+  }
+  @keyframes nimraceBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes nimraceFace {
+    0%     { transform: scaleX(-1); }
+    49.9%  { transform: scaleX(-1); }
+    50%    { transform: scaleX(1); }
+    100%   { transform: scaleX(1); }
+  }
+  @media (max-width: 480px) {
+    .nimrace-emoji { font-size: 30px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nimrace-horse { display: none !important; }
+  }
 </style>
 
 <canvas id="pixelCanvas" aria-hidden="true"></canvas>
@@ -1233,6 +1273,10 @@
 <div class="nimwalk-elephant" id="nimElephant" role="button" tabindex="-1" aria-hidden="true" aria-label="A friendly elephant. Click it for a surprise.">
   <div class="nimwalk-bubble">Bye Nimy</div>
   <span class="nimwalk-bob"><span class="nimwalk-emoji" aria-hidden="true">&#128024;</span></span>
+</div>
+
+<div class="nimrace-horse" id="nimHorse" aria-hidden="true">
+  <span class="nimrace-bob"><span class="nimrace-face"><span class="nimrace-emoji" aria-hidden="true">&#128014;</span></span></span>
 </div>
 
 <script>
@@ -1891,6 +1935,19 @@
       }, walkMs);
     }
 
+    var horse = document.getElementById('nimHorse');
+    var horseHideTimer = null;
+    function raceHorse() {
+      if (!horse || reduceMotion) return;
+      clearTimeout(horseHideTimer);
+      horse.classList.remove('nimrace-active');
+      void horse.offsetWidth; /* force reflow so the loop restarts on repeat triggers */
+      horse.classList.add('nimrace-active');
+      horseHideTimer = setTimeout(function () {
+        horse.classList.remove('nimrace-active');
+      }, 6200);
+    }
+
     if (elephant) {
       /* "click" requires the press AND release to land on the same element --
          on a fast, continuously CSS-animated target, the element can drift out
@@ -2016,6 +2073,7 @@
       }, 2000);
 
       setTimeout(walkElephant, 450);
+      raceHorse();
 
       if (reduceMotion || !ctx) return;
       runId++;
