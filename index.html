@@ -408,6 +408,16 @@
   .xp-item ul { margin: 10px 0 0; padding-left: 20px; color: var(--ink); }
   .xp-item li { margin-bottom: 5px; font-size: 0.94rem; }
   .xp-link { font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.72rem; margin-top: 10px; display: inline-block; }
+  .xp-link-btn {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.74rem; font-weight: 600; letter-spacing: 0.01em;
+    margin-top: 10px; display: inline-flex; align-items: center; gap: 6px;
+    color: #F7F3EC; text-decoration: none;
+    background: var(--scarlet); border-radius: 999px; padding: 9px 20px;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .xp-link-btn:hover { background: #FF6E66; transform: translateY(-1px); }
+  .xp-link-btn:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; }
 
   /* ---------- CASE STUDIES ---------- */
   .case {
@@ -1266,7 +1276,7 @@
           <li>Run social media advertising and content across Facebook and Instagram, driving 250%+ year-over-year sales growth</li>
           <li>Manage 35+ transactions weekly, in-store and customer interactions, and back-end sourcing, importing inventory directly from India to keep the store stocked</li>
         </ul>
-        <a class="xp-link" href="https://shoprangeet.com" target="_blank" rel="noopener noreferrer">&rarr; Visit Rangeet</a>
+        <a class="xp-link-btn" href="https://shoprangeet.com" target="_blank" rel="noopener noreferrer">Visit Rangeet &rarr;</a>
       </div>
 
       <div class="xp-item reveal">
