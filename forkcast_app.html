@@ -490,14 +490,19 @@ const POOLS = {
  oxleys:{A:[
   ["Donatos Pepperoni Pizza","Pizza",330,"","mi wh","core"],["Donatos Cheese Pizza","Pizza",300,"v","mi wh","core"],["Garden Salad","Grab & Go",150,"vg gf",""],["Chicken Bacon Ranch Wrap","Grab & Go",560,"","wh mi eg"]]},
 };
-// limited-time waves announced by Dining Services for fall 2026
-const WAVES = [{n:1,start:"2026-09-21",end:"2026-10-18"},{n:2,start:"2026-10-19",end:"2026-11-09"},{n:3,start:"2026-11-10",end:"2026-12-06"}];
-const LTO_WAVE = 2; // demo LTO items belong to the current wave
+// Limited-time "waves" roll on a fixed cadence anchored to a real announcement date, so this
+// never goes stale no matter when it's opened: each 28-day wave is computed live from today's
+// real date, and wave numbers cycle 1/2/3 forever rather than stopping after a fixed semester.
+const WAVE_EPOCH = "2026-09-21"; // the first wave's real start date
+const WAVE_LEN = 28; // days per wave
+const LTO_PHASE = 2; // demo LTO items surface during this one phase of every 3-wave cycle
+function waveIndex(date){ return Math.floor(daysBetween(WAVE_EPOCH,date)/WAVE_LEN); }
+function waveAt(idx){ const start=addDays(WAVE_EPOCH, idx*WAVE_LEN); return {n:(((idx%3)+3)%3)+1, idx, start, end:addDays(start,WAVE_LEN-1)}; }
+function waveOf(date){ return waveAt(waveIndex(date)); }
 
 function hashStr(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
 function rng(seed){ let a=seed>>>0; return ()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
 function slug(s){ return s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); }
-function waveOf(date){ return WAVES.find(w=>date>=w.start && date<=w.end); }
 
 function hoursFor(loc,dow){ return dow===0?loc.hours.sun: dow===6?loc.hours.sat: dow===5?loc.hours.fri: loc.hours.wk; }
 function periodsFor(loc,dow){
@@ -532,7 +537,7 @@ function buildMenu(date){
         const take = loc.kind==="trad" ? Math.max(1,Math.ceil(rot.length*0.6)) : rot.length;
         for(const t of [...core, ...rot.slice(0,take)]){
           const f = t[5]||"";
-          if(f.includes("lto") && (!wave || wave.n!==LTO_WAVE)) continue;
+          if(f.includes("lto") && wave.n!==LTO_PHASE) continue;
           if(f.includes("!tue")){ if(dow===2) continue; } else if(f.includes("tue") && dow!==2) continue;
           const itemId = slug(loc.id+"-"+t[0]);
           out.push({key:`${itemId}|${date}|${per.p}`, itemId, date, loc:loc.id, p:per.p, period:per.name, pStart:per.start, pEnd:per.end,
@@ -858,7 +863,7 @@ function renderDrawer(){
     <div class="drawer-h"><div><h2 id="dTitle">${esc(it.name)}</h2><div class="sub">${esc(loc.name)} · ${esc(it.station)} · ${esc(it.period)} ${fmtMin(it.pStart)}–${fmtMin(it.pEnd)}, ${esc(fmtDate(it.date))}</div></div><button class="x" aria-label="Close">×</button></div>
     <div class="drawer-b">
       <div class="sect"><div class="facts">
-        ${it.lto?`<span class="tag lto">Limited time · wave ${LTO_WAVE} ends ${fmtDate(WAVES[LTO_WAVE-1].end,{month:"short",day:"numeric"})}</span>`:""}
+        ${it.lto?`<span class="tag lto">Limited time · this wave ends ${fmtDate(waveOf(it.date).end,{month:"short",day:"numeric"})}</span>`:""}
         ${it.cal?`<span class="tag mono">${it.cal} cal</span>`:""}
         ${it.diets.map(d=>`<span class="tag">${DIET[d]}</span>`).join("")}
         ${it.allergens.length?it.allergens.map(a=>`<span class="tag al">${ALLERGEN[a]}</span>`).join(""):`<span class="tag">No top-9 allergens listed</span>`}
@@ -902,23 +907,22 @@ function renderDrawer(){
    7. LIMITED-TIME VIEW
    ============================================================ */
 function renderLTO(){
-  const now=nyNow(); const w = waveOf(now.date);
-  const next = WAVES.find(x=>x.start>now.date);
-  const cur = w || next || WAVES[WAVES.length-1];
-  const len = daysBetween(cur.start,cur.end)+1, done = w?daysBetween(cur.start,now.date)+1:0;
+  const now=nyNow(); const w = waveOf(now.date); const next = waveAt(w.idx+1);
+  const len = WAVE_LEN, done = daysBetween(w.start,now.date)+1;
   const ltoToday = new Map();
   for(let i=0;i<7;i++){ for(const it of buildMenu(addDays(now.date,i))){ if(it.lto && !ltoToday.has(it.itemId)) ltoToday.set(it.itemId,it); } }
   const all = [...ltoToday.values()];
   const byName = new Map(); for(const it of all){ if(!byName.has(it.name)) byName.set(it.name,{it,locs:new Set(),ids:new Set()}); const g=byName.get(it.name); g.locs.add(LOC[it.loc].name); g.ids.add(it.itemId); }
   const items = [...byName.values()];
+  const timeline = [waveAt(w.idx-1), w, next];
   $("#view-lto").innerHTML = `<div style="display:grid;gap:14px">
     <div class="wave">
-      <div class="eyebrow">${w?`Wave ${w.n} of 3 is on now`:"Between waves"}</div>
-      <h2>${w?`${items.length} limited-time items until ${fmtDate(w.end,{month:"long",day:"numeric"})}`:"New limited-time items are coming"}</h2>
-      <div class="prog" aria-label="Wave progress"><i style="width:${w?Math.round(done/len*100):0}%"></i></div>
-      <div class="fine">${w?`Day ${done} of ${len}. `:""}${next?`Next refresh in ${daysBetween(now.date,next.start)} days (${fmtDate(next.start,{month:"short",day:"numeric"})}).`:"This is the last wave of the semester."}</div>
-      <div class="timeline">${WAVES.map(x=>`<div class="${w&&x.n===w.n?"now":(x.end<now.date?"past":"")}"><b>Wave ${x.n}</b>${fmtDate(x.start,{month:"short",day:"numeric"})} – ${fmtDate(x.end,{month:"short",day:"numeric"})}</div>`).join("")}</div>
-      <p class="fine" style="margin:0">Dining Services refreshes café and marketplace menus on Sep 21, Oct 19 and Nov 10 this fall. Items below are demo examples.</p>
+      <div class="eyebrow">Wave ${w.n} of 3 is on now</div>
+      <h2>${items.length} limited-time item${items.length===1?"":"s"} until ${fmtDate(w.end,{month:"long",day:"numeric"})}</h2>
+      <div class="prog" aria-label="Wave progress"><i style="width:${Math.round(done/len*100)}%"></i></div>
+      <div class="fine">Day ${done} of ${len}. Next refresh in ${daysBetween(now.date,next.start)} days (${fmtDate(next.start,{month:"short",day:"numeric"})}).</div>
+      <div class="timeline">${timeline.map(x=>`<div class="${x.idx===w.idx?"now":(x.end<now.date?"past":"")}"><b>Wave ${x.n}</b>${fmtDate(x.start,{month:"short",day:"numeric"})} – ${fmtDate(x.end,{month:"short",day:"numeric"})}</div>`).join("")}</div>
+      <p class="fine" style="margin:0">Dining Services refreshes café and marketplace menus every 4 weeks. Items below are demo examples that rotate the same way, so this stays current however far out you check it.</p>
     </div>
     <div class="grid2">${items.map(({it,locs,ids})=>{ let n=0,sum=0; for(const id of ids){ const r=ratingsFor(id); n+=r.n; sum+=r.avg*r.n; } const L=[...locs];
       return `<button class="card" data-key="${esc(it.key)}"><span class="tag lto" style="justify-self:start">Limited time</span><h3>${esc(it.name)}</h3><span class="where2">${esc(L.slice(0,3).join(", "))}${L.length>3?` and ${L.length-3} more`:""} · ${esc(it.station)}</span><span>${n?`<b class="mono">${(sum/n).toFixed(1)}</b> <span class="stars">★</span> <span class="fine">${n} rating${n>1?"s":""}</span>`:`<span class="fine">Be the first to rate it</span>`}</span></button>`; }).join("")}</div>
