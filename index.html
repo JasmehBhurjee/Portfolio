@@ -711,6 +711,50 @@
     .nimpop-dot, .nimpop-toast { transition: opacity 0.3s ease; }
   }
 
+  /* ---------- HIDDEN JOB HQ GATE (click the middot in the footer) ----------
+     Same trick as the "Hi Nimy" dot above: the trigger is a real character
+     already in the running text, styled to look inert at rest. */
+  .hq-hot {
+    display: inline-block; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s ease, transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .hq-hot:hover, .hq-hot:focus-visible { color: var(--nav-red); transform: scale(1.5); }
+  .hq-hot:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; border-radius: 2px; }
+
+  .hq-gate {
+    position: fixed; inset: 0; z-index: 210;
+    background: rgba(10,10,8,0.72);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .hq-gate.open { display: flex; }
+  .hq-gate-card {
+    position: relative; width: 100%; max-width: 320px;
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 6px;
+    padding: 34px 26px 26px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  }
+  .hq-gate-close {
+    position: absolute; top: 10px; right: 10px; background: none; border: none;
+    color: var(--ink-muted); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 6px;
+  }
+  .hq-gate-close:hover { color: var(--ink); }
+  .hq-gate-lock { font-size: 1.6rem; margin-bottom: 8px; }
+  .hq-gate-card h3 { font-family: 'Spectral', serif; font-size: 1.3rem; margin: 0 0 4px; }
+  .hq-gate-card p { font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.82rem; color: var(--ink-muted); margin: 0 0 18px; }
+  .hq-gate-card input {
+    width: 100%; background: var(--paper-sunken); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 4px; padding: 10px 12px; font-size: 0.95rem; text-align: center; letter-spacing: 1px;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .hq-gate-card input:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+  .hq-gate-btn {
+    width: 100%; margin-top: 12px; background: var(--nav-red); color: #fff; border: none;
+    border-radius: 4px; padding: 10px 12px; font-size: 0.92rem; font-weight: 600; cursor: pointer;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .hq-gate-btn:hover { background: #B91334; }
+  .hq-gate-error { font-size: 0.76rem; color: var(--nav-red); margin-top: 10px; min-height: 14px; }
+  .hq-gate-hint { font-size: 0.68rem; color: var(--ink-muted); margin-top: 10px; font-style: italic; }
+
   /* ---------- ELEPHANT WALK-BY (fires right after the "Hi Nimy" pop-up) ----------
      Three separate elements share the motion so their transforms never collide:
      the outer .nimwalk-elephant owns horizontal travel via the `left` property
@@ -1341,8 +1385,21 @@
     </div>
   </section>
 
-  <footer>Jasmeh Singh Bhurjee &middot; Last updated August 2026</footer>
+  <footer>Jasmeh Singh Bhurjee <span class="hq-hot" id="hqHot" role="button" tabindex="0" aria-label="A little something extra">&middot;</span> Last updated August 2026</footer>
 </main>
+
+<div class="hq-gate" id="hqGate" aria-hidden="true">
+  <div class="hq-gate-card">
+    <button class="hq-gate-close" id="hqGateClose" type="button" aria-label="Close">&times;</button>
+    <div class="hq-gate-lock" aria-hidden="true">&#128274;</div>
+    <h3>Job Hunt HQ</h3>
+    <p>Private mission control. You know the password.</p>
+    <input id="hqGateInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="passphrase">
+    <button class="hq-gate-btn" id="hqGateBtn" type="button">Unlock</button>
+    <div class="hq-gate-error" id="hqGateError"></div>
+    <div class="hq-gate-hint">hint: the bike you rebuilt with your own hands</div>
+  </div>
+</div>
 
 <div class="deck-modal" id="deckModal" aria-hidden="true">
   <div class="deck-modal-head">
@@ -2499,6 +2556,53 @@
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+  })();
+
+  /* ---- hidden Job Hunt HQ gate (click the middot after the name in the footer) ---- */
+  (function () {
+    var JOB_HQ_URL = 'https://claude.ai/artifact/KRngwxqE9U8eE9YeT3r5rA';
+    var JOB_HQ_PASS = 'ke175';
+    var hot = document.getElementById('hqHot');
+    var gate = document.getElementById('hqGate');
+    if (!hot || !gate) return;
+    var closeBtn = document.getElementById('hqGateClose');
+    var input = document.getElementById('hqGateInput');
+    var unlockBtn = document.getElementById('hqGateBtn');
+    var errEl = document.getElementById('hqGateError');
+
+    function openGate() {
+      gate.classList.add('open');
+      gate.setAttribute('aria-hidden', 'false');
+      errEl.textContent = '';
+      input.value = '';
+      setTimeout(function () { input.focus(); }, 60);
+    }
+    function closeGate() {
+      gate.classList.remove('open');
+      gate.setAttribute('aria-hidden', 'true');
+      hot.focus();
+    }
+    function tryUnlock() {
+      var val = (input.value || '').trim().toLowerCase();
+      if (val === JOB_HQ_PASS) {
+        window.open(JOB_HQ_URL, '_blank', 'noopener');
+        closeGate();
+      } else {
+        errEl.textContent = 'Not quite. Try again.';
+      }
+    }
+
+    hot.addEventListener('click', openGate);
+    hot.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGate(); }
+    });
+    closeBtn.addEventListener('click', closeGate);
+    gate.addEventListener('click', function (e) { if (e.target === gate) closeGate(); });
+    unlockBtn.addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && gate.classList.contains('open')) closeGate();
+    });
   })();
 </script>
 
