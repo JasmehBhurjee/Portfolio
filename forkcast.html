@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#15171A">
+<title>Forkcast</title>
+<meta name="description" content="Forkcast is a campus food community concept from Jasmeh Singh Bhurjee: reviews and alerts for limited time food at Ohio State.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --paper: #15171A;
+    --paper-raised: #1D2024;
+    --paper-sunken: #22252A;
+    --ink: #ECE9E0;
+    --ink-muted: #9C988C;
+    --line: #33363B;
+    --blueprint: #7FADE0;
+    --copper: #E0925A;
+    --copper-soft: #34241A;
+    --scarlet: #FF5B54;
+    --nav-red: #960A26;
+    --go: #74AE86;
+    --go-soft: #1E2A20;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper); color: var(--ink); margin: 0;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: 'Spectral', Georgia, serif; font-weight: 500; }
+  a { color: var(--blueprint); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  header.fc-nav {
+    border-bottom: 1px solid var(--line); padding: 18px 0;
+  }
+  .fc-nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .fc-mark { font-family: 'Spectral', serif; font-size: 1.2rem; font-style: italic; color: var(--ink); text-decoration: none; }
+  .fc-back { font-size: 0.82rem; color: var(--ink-muted); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+  .fc-back:hover { color: var(--copper); border-color: var(--copper); }
+
+  .fc-badge {
+    display: inline-block; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--copper); background: var(--copper-soft); border: 1px solid var(--copper);
+    border-radius: 999px; padding: 4px 12px; margin-bottom: 18px;
+  }
+
+  .fc-hero { padding: 64px 0 40px; }
+  .fc-hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 16px; line-height: 1.15; }
+  .fc-hero p.lede { font-size: 1.1rem; color: var(--ink-muted); max-width: 56ch; margin: 0; }
+
+  section { padding: 36px 0; border-top: 1px solid var(--line); }
+  section h2 { font-size: 1.5rem; margin: 0 0 18px; }
+
+  .fc-problems { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+  .fc-problem {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
+  }
+  .fc-problem .num { font-family: 'Spectral', serif; font-style: italic; color: var(--copper); font-size: 0.9rem; display: block; margin-bottom: 8px; }
+  .fc-problem p { margin: 0; font-size: 0.92rem; color: var(--ink); }
+
+  .fc-features { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+  .fc-feature {
+    border: 1px solid var(--line); border-radius: 8px; padding: 20px; background: var(--paper-sunken);
+  }
+  .fc-feature h3 { font-size: 1.05rem; margin: 0 0 8px; }
+  .fc-feature p { margin: 0; font-size: 0.88rem; color: var(--ink-muted); }
+
+  .fc-preview-row { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .fc-phone {
+    width: 260px; border: 10px solid #0B0C0E; border-radius: 32px; background: var(--paper-sunken);
+    overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+  }
+  .fc-phone-screen { padding: 14px 14px 20px; }
+  .fc-phone-topbar {
+    display: flex; align-items: center; justify-content: space-between; font-size: 0.68rem;
+    color: var(--ink-muted); margin-bottom: 12px;
+  }
+  .fc-phone-title { font-family: 'Spectral', serif; font-style: italic; font-size: 1.15rem; color: var(--ink); margin-bottom: 4px; }
+  .fc-phone-sub { font-size: 0.72rem; color: var(--ink-muted); margin-bottom: 14px; }
+  .fc-post {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px;
+  }
+  .fc-post-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .fc-avatar {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--copper-soft); color: var(--copper);
+    display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; flex-shrink: 0;
+  }
+  .fc-post-name { font-size: 0.74rem; color: var(--ink); font-weight: 600; }
+  .fc-post-loc { font-size: 0.64rem; color: var(--ink-muted); }
+  .fc-post-body { font-size: 0.74rem; color: var(--ink); margin: 0 0 8px; }
+  .fc-post-tag {
+    display: inline-block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--scarlet); border: 1px solid var(--scarlet); border-radius: 999px; padding: 2px 8px; margin-bottom: 8px;
+  }
+  .fc-post-stars { color: var(--copper); font-size: 0.72rem; }
+  .fc-alert {
+    background: var(--copper-soft); border: 1px solid var(--copper); border-radius: 10px; padding: 10px 12px;
+    font-size: 0.72rem; color: var(--copper); margin-bottom: 10px;
+  }
+  .fc-caption { max-width: 320px; font-size: 0.88rem; color: var(--ink-muted); }
+  .fc-caption strong { color: var(--ink); }
+
+  .fc-status {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px; padding: 22px;
+  }
+  .fc-status-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+  .fc-status-row:last-child { margin-bottom: 0; }
+  .fc-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--go); margin-top: 6px; flex-shrink: 0;
+  }
+  .fc-dot.pending { background: var(--copper); }
+  .fc-status-row p { margin: 0; font-size: 0.92rem; }
+  .fc-status-row .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); display: block; margin-bottom: 3px; }
+
+  .fc-cta { text-align: center; padding: 48px 0 64px; border-top: 1px solid var(--line); }
+  .fc-cta h2 { margin-bottom: 10px; }
+  .fc-cta p { color: var(--ink-muted); margin: 0 0 20px; }
+  .fc-cta a.btn {
+    display: inline-block; background: var(--nav-red); color: #fff; text-decoration: none;
+    padding: 11px 22px; border-radius: 6px; font-size: 0.92rem; font-weight: 600;
+  }
+  .fc-cta a.btn:hover { background: #B91334; }
+
+  footer.fc-foot { text-align: center; font-size: 0.7rem; color: var(--ink-muted); padding: 24px 0 50px; }
+
+  @media (max-width: 760px) {
+    .fc-problems, .fc-features { grid-template-columns: 1fr; }
+    .fc-preview-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header class="fc-nav">
+  <div class="wrap">
+    <span class="fc-mark">Forkcast</span>
+    <a class="fc-back" href="index.html">&larr; Jasmeh Bhurjee</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="fc-hero">
+    <span class="fc-badge">Concept preview. Not a live app yet.</span>
+    <h1>Never miss what's actually good on campus.</h1>
+    <p class="lede">Forkcast is a community for Ohio State students to find and review the food worth knowing about, especially the limited time stuff that sells out before most people even hear about it.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>The problem</h2>
+    <div class="fc-problems">
+      <div class="fc-problem">
+        <span class="num">01</span>
+        <p>Limited edition items and one off food drops show up on campus all the time, and by the time you hear about them, they're already gone.</p>
+      </div>
+      <div class="fc-problem">
+        <span class="num">02</span>
+        <p>Finding out depends on who you know. If you don't have the right friends or the right group chat, you just miss it.</p>
+      </div>
+      <div class="fc-problem">
+        <span class="num">03</span>
+        <p>There's no shared place for students to actually review campus food and flag what's worth trying before it's gone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What Forkcast does</h2>
+    <div class="fc-features">
+      <div class="fc-feature">
+        <h3>Reviews, from students</h3>
+        <p>Rate and review food from dining halls, food trucks, and campus spots, so good finds don't depend on word of mouth alone.</p>
+      </div>
+      <div class="fc-feature">
+        <h3>Limited time alerts</h3>
+        <p>Get notified when something limited or one off shows up nearby, so you can actually try it before it's gone.</p>
+      </div>
+      <div class="fc-feature">
+        <h3>Built for one campus</h3>
+        <p>Focused on Ohio State specifically, so the reviews and alerts are always about places you can actually walk to.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>A look at the idea</h2>
+    <div class="fc-preview-row">
+      <div class="fc-phone">
+        <div class="fc-phone-screen">
+          <div class="fc-phone-topbar"><span>9:41</span><span>Forkcast</span></div>
+          <div class="fc-phone-title">Nearby now</div>
+          <div class="fc-phone-sub">Ohio State campus</div>
+
+          <div class="fc-alert">Limited drop: matcha donuts just restocked at the Union, 12 min ago</div>
+
+          <div class="fc-post">
+            <div class="fc-post-head">
+              <div class="fc-avatar">BU</div>
+              <div>
+                <div class="fc-post-name">Buckeye23</div>
+                <div class="fc-post-loc">Woody's</div>
+              </div>
+            </div>
+            <span class="fc-post-tag">Limited</span>
+            <p class="fc-post-body">The seasonal chicken sandwich is back for one week only. Worth the line.</p>
+            <div class="fc-post-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          </div>
+
+          <div class="fc-post">
+            <div class="fc-post-head">
+              <div class="fc-avatar">MG</div>
+              <div>
+                <div class="fc-post-name">mgoeshungry</div>
+                <div class="fc-post-loc">Traditions at Scott</div>
+              </div>
+            </div>
+            <p class="fc-post-body">Underrated stir fry station, barely any wait after 7pm.</p>
+            <div class="fc-post-stars">&#9733;&#9733;&#9733;&#9733;&#9730;</div>
+          </div>
+        </div>
+      </div>
+      <p class="fc-caption">
+        <strong>This is a design mockup, not a working app.</strong> It's here to show the idea clearly: a feed of real reviews, with limited time items flagged and surfaced before they're gone.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Where this stands today</h2>
+    <div class="fc-status">
+      <div class="fc-status-row">
+        <span class="fc-dot"></span>
+        <p><span class="label">Concept</span>Defined, and shaped by the problem above.</p>
+      </div>
+      <div class="fc-status-row">
+        <span class="fc-dot pending"></span>
+        <p><span class="label">In progress</span>Seeking approval for access to campus dining data, so alerts and listings can be powered by real, current menu information instead of relying only on what students post.</p>
+      </div>
+      <div class="fc-status-row">
+        <span class="fc-dot pending"></span>
+        <p><span class="label">Not built yet</span>The screens above are a concept, not a working app. That's next once the data access question is settled.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="fc-cta">
+  <div class="wrap">
+    <h2>Want to hear more about it?</h2>
+    <p>I'm happy to walk through the idea, or hear what you'd want out of something like this.</p>
+    <a class="btn" href="mailto:bhurjee.2@osu.edu">Email me</a>
+  </div>
+</div>
+
+<footer class="fc-foot">Forkcast is a personal project by Jasmeh Singh Bhurjee.</footer>
+
+</body>
+</html>
