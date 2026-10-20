@@ -711,18 +711,14 @@
     .nimpop-dot, .nimpop-toast { transition: opacity 0.3s ease; }
   }
 
-  /* ---------- HIDDEN JOB HQ GATE (click the middot in the footer) ----------
-     Same trick as the "Hi Nimy" dot above: the trigger is a real character
-     already in the running text, styled to look inert at rest. */
-  .hq-hot {
-    display: inline-block; cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: color 0.3s ease, transform 0.3s cubic-bezier(.34,1.56,.64,1);
-  }
-  .hq-hot:hover, .hq-hot:focus-visible { color: var(--nav-red); transform: scale(1.5); }
-  .hq-hot:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; border-radius: 2px; }
+  /* ---------- JOB HQ: private login + embedded dashboard ----------
+     Click the "JB" mark top-left to open the login card. A correct code
+     opens an in-page panel reading Job Hunt HQ's published data straight
+     from ./jobs_snapshot.json -- no redirect, no iframe, same page. */
+  #navMark { cursor: pointer; }
 
   .hq-gate {
-    position: fixed; inset: 0; z-index: 210;
+    position: fixed; inset: 0; z-index: 220;
     background: rgba(10,10,8,0.72);
     display: none; align-items: center; justify-content: center; padding: 20px;
   }
@@ -737,23 +733,132 @@
     color: var(--ink-muted); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 6px;
   }
   .hq-gate-close:hover { color: var(--ink); }
-  .hq-gate-lock { font-size: 1.6rem; margin-bottom: 8px; }
+  .hq-gate-mark {
+    width: 40px; height: 40px; margin: 0 auto 14px; border-radius: 50%;
+    background: var(--copper-soft); color: var(--copper); border: 1px solid var(--copper);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Spectral', serif; font-size: 1rem; font-weight: 600;
+  }
   .hq-gate-card h3 { font-family: 'Spectral', serif; font-size: 1.3rem; margin: 0 0 4px; }
   .hq-gate-card p { font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.82rem; color: var(--ink-muted); margin: 0 0 18px; }
+  .hq-gate-card label {
+    display: block; font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted);
+    text-align: left; margin-bottom: 6px;
+  }
   .hq-gate-card input {
     width: 100%; background: var(--paper-sunken); border: 1px solid var(--line); color: var(--ink);
-    border-radius: 4px; padding: 10px 12px; font-size: 0.95rem; text-align: center; letter-spacing: 1px;
+    border-radius: 4px; padding: 10px 12px; font-size: 0.95rem; letter-spacing: 1px;
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .hq-gate-card input:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
   .hq-gate-btn {
-    width: 100%; margin-top: 12px; background: var(--nav-red); color: #fff; border: none;
+    width: 100%; margin-top: 14px; background: var(--nav-red); color: #fff; border: none;
     border-radius: 4px; padding: 10px 12px; font-size: 0.92rem; font-weight: 600; cursor: pointer;
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .hq-gate-btn:hover { background: #B91334; }
   .hq-gate-error { font-size: 0.76rem; color: var(--nav-red); margin-top: 10px; min-height: 14px; }
-  .hq-gate-hint { font-size: 0.68rem; color: var(--ink-muted); margin-top: 10px; font-style: italic; }
+
+  /* ---- embedded Job Hunt HQ panel ---- */
+  .hq-panel {
+    position: fixed; inset: 0; z-index: 215;
+    background: var(--paper);
+    display: none; flex-direction: column;
+  }
+  .hq-panel.open { display: flex; }
+  .hq-panel-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 18px 24px; border-bottom: 1px solid var(--line); flex-shrink: 0;
+  }
+  .hq-panel-head-text .hq-eyebrow {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper);
+  }
+  .hq-panel-head h2 { font-family: 'Spectral', serif; font-size: 1.4rem; margin: 2px 0 0; }
+  .hq-panel-close {
+    background: none; border: 1px solid var(--line); color: var(--ink);
+    width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; line-height: 1;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .hq-panel-close:hover { background: var(--paper-sunken); }
+  .hq-panel-body { flex: 1; overflow-y: auto; padding: 22px 24px 60px; }
+  .hq-panel-inner { max-width: 860px; margin: 0 auto; }
+
+  .hq-manage {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; margin-bottom: 20px;
+    background: var(--paper-raised); font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .hq-manage p { margin: 0; font-size: 0.82rem; color: var(--ink-muted); max-width: 46ch; }
+  .hq-manage a {
+    flex-shrink: 0; font-size: 0.8rem; font-weight: 600; color: var(--nav-red); text-decoration: none;
+    border-bottom: 1px solid var(--nav-red); padding-bottom: 2px;
+  }
+  .hq-manage a:hover { color: var(--copper); border-color: var(--copper); }
+
+  .hq-priority {
+    border: 1px solid var(--nav-red); background: var(--copper-soft); border-radius: 8px;
+    padding: 16px 16px 4px; margin-bottom: 22px;
+  }
+  .hq-priority-eyebrow {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; color: var(--nav-red); font-weight: 600;
+  }
+  .hq-priority h3 { font-family: 'Spectral', serif; font-size: 1.1rem; margin: 4px 0 12px; }
+
+  .hq-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 18px; padding-bottom: 4px; }
+  .hq-tab {
+    flex: 0 0 auto; background: transparent; border: 1px solid var(--line); color: var(--ink-muted);
+    border-radius: 999px; padding: 7px 13px; font-size: 0.76rem; cursor: pointer; white-space: nowrap;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .hq-tab[aria-selected="true"] { background: var(--copper-soft); border-color: var(--copper); color: var(--copper); }
+
+  .hq-grid { display: grid; gap: 14px; margin-bottom: 8px; }
+  .hq-card {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 6px; padding: 16px 16px 14px;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .hq-card-co { font-size: 0.72rem; color: var(--ink-muted); letter-spacing: 0.02em; }
+  .hq-card h4 { font-family: 'Spectral', serif; font-size: 1.1rem; margin: 2px 0 0; font-weight: 500; }
+  .hq-card-meta { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0 0; font-size: 0.74rem; color: var(--ink-muted); }
+  .hq-card-why { margin: 10px 0 0; font-size: 0.82rem; color: var(--ink); }
+  .hq-card details { margin-top: 8px; }
+  .hq-card summary { cursor: pointer; color: var(--ink-muted); font-size: 0.74rem; }
+  .hq-card details p { font-size: 0.76rem; color: var(--ink-muted); margin: 6px 0 0; }
+  .hq-card-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .hq-btn {
+    font-size: 0.74rem; border-radius: 4px; padding: 7px 11px; cursor: pointer; border: 1px solid var(--line);
+    background: var(--paper-sunken); color: var(--ink); font-family: inherit; text-decoration: none; display: inline-flex; align-items: center;
+  }
+  .hq-btn:hover { border-color: var(--copper); color: var(--copper); }
+  .hq-btn.primary { background: var(--nav-red); border-color: var(--nav-red); color: #fff; }
+  .hq-btn.primary:hover { background: #B91334; border-color: #B91334; color: #fff; }
+  .hq-watch-why { font-size: 0.78rem; color: var(--ink-muted); margin: 8px 0 0; }
+  .hq-empty { text-align: center; color: var(--ink-muted); padding: 30px 16px; border: 1px dashed var(--line); border-radius: 6px; font-size: 0.82rem; font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+  .hq-view-modal {
+    position: fixed; inset: 0; z-index: 230; background: rgba(10,10,8,0.8);
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .hq-view-modal.open { display: flex; }
+  .hq-view-card {
+    width: 100%; max-width: 560px; max-height: 82vh; background: var(--paper-raised);
+    border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column;
+  }
+  .hq-view-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .hq-view-head h4 { font-family: 'Spectral', serif; font-size: 1rem; margin: 0; }
+  .hq-view-body { padding: 16px 18px; overflow-y: auto; }
+  .hq-view-body pre {
+    white-space: pre-wrap; font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.8rem; margin: 0; color: var(--ink);
+  }
+  .hq-view-actions { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
+  @media (max-width: 600px) {
+    .hq-panel-head { padding: 14px 16px; }
+    .hq-panel-body { padding: 16px 16px 50px; }
+  }
 
   /* ---------- ELEPHANT WALK-BY (fires right after the "Hi Nimy" pop-up) ----------
      Three separate elements share the motion so their transforms never collide:
@@ -927,7 +1032,7 @@
 
 <header class="site-nav" id="siteHeader">
   <div class="nav-inner">
-    <a class="nav-mark" href="#top">JB</a>
+    <a class="nav-mark" href="#top" id="navMark">JB</a>
     <ul class="nav-links">
       <li><a href="#about"><span class="nl-num">01</span> About</a></li>
       <li><a href="#projects"><span class="nl-num">02</span> Projects</a></li>
@@ -1385,19 +1490,65 @@
     </div>
   </section>
 
-  <footer>Jasmeh Singh Bhurjee <span class="hq-hot" id="hqHot" role="button" tabindex="0" aria-label="A little something extra">&middot;</span> Last updated August 2026</footer>
+  <footer>Jasmeh Singh Bhurjee &middot; Last updated August 2026</footer>
 </main>
 
 <div class="hq-gate" id="hqGate" aria-hidden="true">
   <div class="hq-gate-card">
     <button class="hq-gate-close" id="hqGateClose" type="button" aria-label="Close">&times;</button>
-    <div class="hq-gate-lock" aria-hidden="true">&#128274;</div>
+    <div class="hq-gate-mark" aria-hidden="true">JB</div>
     <h3>Job Hunt HQ</h3>
-    <p>Private mission control. You know the password.</p>
-    <input id="hqGateInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="passphrase">
-    <button class="hq-gate-btn" id="hqGateBtn" type="button">Unlock</button>
+    <p>A private area of this site &mdash; sign in to view.</p>
+    <label for="hqGateInput">Access code</label>
+    <input id="hqGateInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;">
+    <button class="hq-gate-btn" id="hqGateBtn" type="button">Sign in</button>
     <div class="hq-gate-error" id="hqGateError"></div>
-    <div class="hq-gate-hint">hint: the bike you rebuilt with your own hands</div>
+  </div>
+</div>
+
+<div class="hq-panel" id="hqPanel" aria-hidden="true">
+  <div class="hq-panel-head">
+    <div class="hq-panel-head-text">
+      <div class="hq-eyebrow">Private</div>
+      <h2>Job Hunt HQ</h2>
+    </div>
+    <button class="hq-panel-close" id="hqPanelClose" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="hq-panel-body">
+    <div class="hq-panel-inner">
+      <div class="hq-manage">
+        <p>This view is a snapshot of my current internship search &mdash; tailored resumes and cover letters included. Status tracking and AI-drafted leads live in the full control panel.</p>
+        <a href="https://claude.ai/artifact/KRngwxqE9U8eE9YeT3r5rA" target="_blank" rel="noopener">Open full control panel &#8599;</a>
+      </div>
+      <div class="hq-priority" id="hqPriority" hidden>
+        <div class="hq-priority-eyebrow">Apply to these first</div>
+        <h3 id="hqPriorityTitle">Daily priority</h3>
+        <div class="hq-grid" id="hqPriorityGrid"></div>
+      </div>
+      <nav class="hq-tabs" id="hqTabs" role="tablist" aria-label="Job categories">
+        <button class="hq-tab" data-tab="all" role="tab" aria-selected="true">All</button>
+        <button class="hq-tab" data-tab="both" role="tab" aria-selected="false">Strong Match</button>
+        <button class="hq-tab" data-tab="resume" role="tab" aria-selected="false">Resume Match</button>
+        <button class="hq-tab" data-tab="interest" role="tab" aria-selected="false">Interest Match</button>
+        <button class="hq-tab" data-tab="combo_business" role="tab" aria-selected="false">Business Fit</button>
+        <button class="hq-tab" data-tab="watchlist" role="tab" aria-selected="false">Watchlist</button>
+      </nav>
+      <div class="hq-grid" id="hqGrid"><div class="hq-empty">Loading&hellip;</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="hq-view-modal" id="hqViewModal" aria-hidden="true">
+  <div class="hq-view-card">
+    <div class="hq-view-head">
+      <h4 id="hqViewTitle">&nbsp;</h4>
+      <button class="hq-panel-close" id="hqViewClose" type="button" aria-label="Close">&times;</button>
+    </div>
+    <div class="hq-view-body"><pre id="hqViewText"></pre></div>
+    <div class="hq-view-actions">
+      <button class="hq-btn" id="hqViewCopy" type="button">Copy</button>
+      <button class="hq-btn primary" id="hqViewDownload" type="button">Download .txt</button>
+    </div>
   </div>
 </div>
 
@@ -2558,50 +2709,227 @@
     requestAnimationFrame(frame);
   })();
 
-  /* ---- hidden Job Hunt HQ gate (click the middot after the name in the footer) ---- */
+  /* ---- Job Hunt HQ: login (click "JB" top-left) + embedded dashboard ---- */
   (function () {
-    var JOB_HQ_URL = 'https://claude.ai/artifact/KRngwxqE9U8eE9YeT3r5rA';
     var JOB_HQ_PASS = 'ke175';
-    var hot = document.getElementById('hqHot');
+    var SNAPSHOT_URL = 'jobs_snapshot.json';
+    var CATS = {
+      both: 'Strong Match', resume: 'Resume Match', interest: 'Interest Match', combo_business: 'Business Fit'
+    };
+
+    var mark = document.getElementById('navMark');
     var gate = document.getElementById('hqGate');
-    if (!hot || !gate) return;
-    var closeBtn = document.getElementById('hqGateClose');
-    var input = document.getElementById('hqGateInput');
-    var unlockBtn = document.getElementById('hqGateBtn');
-    var errEl = document.getElementById('hqGateError');
+    var panel = document.getElementById('hqPanel');
+    if (!mark || !gate || !panel) return;
+
+    var gateClose = document.getElementById('hqGateClose');
+    var gateInput = document.getElementById('hqGateInput');
+    var gateBtn = document.getElementById('hqGateBtn');
+    var gateErr = document.getElementById('hqGateError');
+    var panelClose = document.getElementById('hqPanelClose');
+    var tabsEl = document.getElementById('hqTabs');
+    var gridEl = document.getElementById('hqGrid');
+    var priorityWrap = document.getElementById('hqPriority');
+    var priorityTitle = document.getElementById('hqPriorityTitle');
+    var priorityGrid = document.getElementById('hqPriorityGrid');
+    var viewModal = document.getElementById('hqViewModal');
+    var viewTitle = document.getElementById('hqViewTitle');
+    var viewText = document.getElementById('hqViewText');
+    var viewClose = document.getElementById('hqViewClose');
+    var viewCopy = document.getElementById('hqViewCopy');
+    var viewDownload = document.getElementById('hqViewDownload');
+
+    var state = { jobs: [], watchlist: [], priority: null, loaded: false, error: false, currentTab: 'all' };
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function safeName(s) { return String(s || 'item').replace(/[^a-z0-9]+/gi, '_').slice(0, 60); }
 
     function openGate() {
       gate.classList.add('open');
       gate.setAttribute('aria-hidden', 'false');
-      errEl.textContent = '';
-      input.value = '';
-      setTimeout(function () { input.focus(); }, 60);
+      gateErr.textContent = '';
+      gateInput.value = '';
+      setTimeout(function () { gateInput.focus(); }, 60);
     }
     function closeGate() {
       gate.classList.remove('open');
       gate.setAttribute('aria-hidden', 'true');
-      hot.focus();
+      mark.focus();
+    }
+    function openPanel() {
+      panel.classList.add('open');
+      panel.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      if (!state.loaded && !state.error) loadSnapshot();
+    }
+    function closePanel() {
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
     }
     function tryUnlock() {
-      var val = (input.value || '').trim().toLowerCase();
+      var val = (gateInput.value || '').trim().toLowerCase();
       if (val === JOB_HQ_PASS) {
-        window.open(JOB_HQ_URL, '_blank', 'noopener');
         closeGate();
+        openPanel();
       } else {
-        errEl.textContent = 'Not quite. Try again.';
+        gateErr.textContent = 'That code is not right.';
       }
     }
 
-    hot.addEventListener('click', openGate);
-    hot.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGate(); }
-    });
-    closeBtn.addEventListener('click', closeGate);
+    mark.addEventListener('click', function (e) { e.preventDefault(); openGate(); });
+    gateClose.addEventListener('click', closeGate);
     gate.addEventListener('click', function (e) { if (e.target === gate) closeGate(); });
-    unlockBtn.addEventListener('click', tryUnlock);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
+    gateBtn.addEventListener('click', tryUnlock);
+    gateInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryUnlock(); });
+    panelClose.addEventListener('click', closePanel);
+
+    tabsEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('.hq-tab');
+      if (!btn) return;
+      state.currentTab = btn.getAttribute('data-tab');
+      Array.prototype.slice.call(tabsEl.querySelectorAll('.hq-tab')).forEach(function (b) {
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      renderGrid();
+    });
+
+    function loadSnapshot() {
+      gridEl.innerHTML = '<div class="hq-empty">Loading&hellip;</div>';
+      fetch(SNAPSHOT_URL, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('bad status');
+        return r.json();
+      }).then(function (data) {
+        state.jobs = data.jobs || [];
+        state.watchlist = data.watchlist || [];
+        state.priority = data.priority || null;
+        state.loaded = true;
+        renderPriority();
+        renderGrid();
+      }).catch(function () {
+        state.error = true;
+        gridEl.innerHTML = '<div class="hq-empty">Couldn’t load the dashboard data right now.</div>';
+      });
+    }
+
+    function cardHtml(job) {
+      var catLabel = CATS[job.category] || 'Lead';
+      var applyBtn = job.apply_url ? '<a class="hq-btn primary" href="' + esc(job.apply_url) + '" target="_blank" rel="noopener">Apply &rarr;</a>' : '';
+      return (
+        '<article class="hq-card" data-id="' + esc(job.id) + '">' +
+        '<div class="hq-card-co">' + esc(job.company) + ' &middot; ' + esc(catLabel) + '</div>' +
+        '<h4>' + esc(job.title) + '</h4>' +
+        '<div class="hq-card-meta">' +
+        (job.location ? '<span>' + esc(job.location) + '</span>' : '') +
+        (job.pay ? '<span>' + esc(job.pay) + '</span>' : '') +
+        (job.term ? '<span>' + esc(job.term) + '</span>' : '') +
+        '</div>' +
+        (job.why_fit ? '<p class="hq-card-why">' + esc(job.why_fit) + '</p>' : '') +
+        (job.requirements ? '<details><summary>Requirements</summary><p>' + esc(job.requirements) + '</p></details>' : '') +
+        '<div class="hq-card-actions">' + applyBtn +
+        (job.resume_text ? '<button class="hq-btn" data-action="resume">Resume</button>' : '') +
+        (job.cover_letter ? '<button class="hq-btn" data-action="cover">Cover letter</button>' : '') +
+        '</div></article>'
+      );
+    }
+    function watchCardHtml(w) {
+      return (
+        '<article class="hq-card">' +
+        '<div class="hq-card-co">' + esc(w.company) + '</div>' +
+        (w.note ? '<p class="hq-watch-why">' + esc(w.note) + '</p>' : '') +
+        (w.why_watch ? '<p class="hq-watch-why"><strong>Why watch:</strong> ' + esc(w.why_watch) + '</p>' : '') +
+        '<div class="hq-card-actions">' +
+        (w.url ? '<a class="hq-btn" href="' + esc(w.url) + '" target="_blank" rel="noopener">Check postings &rarr;</a>' : '') +
+        '</div></article>'
+      );
+    }
+
+    function renderPriority() {
+      if (!state.priority || !state.priority.job_ids || !state.priority.job_ids.length) {
+        priorityWrap.hidden = true;
+        return;
+      }
+      var items = state.priority.job_ids
+        .map(function (id) { return state.jobs.find(function (j) { return j.id === id; }); })
+        .filter(Boolean);
+      if (!items.length) { priorityWrap.hidden = true; return; }
+      if (state.priority.headline) priorityTitle.textContent = state.priority.headline;
+      priorityGrid.innerHTML = items.map(cardHtml).join('');
+      priorityWrap.hidden = false;
+    }
+
+    function renderGrid() {
+      if (!state.loaded) return;
+      if (state.currentTab === 'watchlist') {
+        if (!state.watchlist.length) { gridEl.innerHTML = '<div class="hq-empty">Nothing on the watchlist.</div>'; return; }
+        gridEl.innerHTML = state.watchlist.map(watchCardHtml).join('');
+        return;
+      }
+      var list = state.jobs.slice();
+      if (state.currentTab !== 'all') list = list.filter(function (j) { return j.category === state.currentTab; });
+      list.sort(function (a, b) { return (b.cool_tier || 0) - (a.cool_tier || 0) || String(a.company).localeCompare(String(b.company)); });
+      if (!list.length) { gridEl.innerHTML = '<div class="hq-empty">No jobs in this category right now.</div>'; return; }
+      gridEl.innerHTML = list.map(cardHtml).join('');
+    }
+
+    function bindCardActions(container) {
+      container.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var card = btn.closest('.hq-card');
+        var id = card.getAttribute('data-id');
+        var job = state.jobs.find(function (j) { return j.id === id; });
+        if (!job) return;
+        if (btn.getAttribute('data-action') === 'resume') openViewModal(job.company + ' — Tailored Resume', job.resume_text, safeName(job.company) + '_Resume.txt');
+        if (btn.getAttribute('data-action') === 'cover') openViewModal(job.company + ' — Cover Letter', job.cover_letter, safeName(job.company) + '_Cover_Letter.txt');
+      });
+    }
+    bindCardActions(gridEl);
+    bindCardActions(priorityGrid);
+
+    var viewCurrent = { text: '', filename: '' };
+    function openViewModal(title, text, filename) {
+      viewTitle.textContent = title;
+      viewText.textContent = text || '';
+      viewCurrent.text = text || '';
+      viewCurrent.filename = filename || 'download.txt';
+      viewModal.classList.add('open');
+      viewModal.setAttribute('aria-hidden', 'false');
+    }
+    function closeViewModal() {
+      viewModal.classList.remove('open');
+      viewModal.setAttribute('aria-hidden', 'true');
+    }
+    viewClose.addEventListener('click', closeViewModal);
+    viewModal.addEventListener('click', function (e) { if (e.target === viewModal) closeViewModal(); });
+    viewCopy.addEventListener('click', function () {
+      navigator.clipboard.writeText(viewCurrent.text).then(function () {
+        viewCopy.textContent = 'Copied!';
+        setTimeout(function () { viewCopy.textContent = 'Copy'; }, 1500);
+      }).catch(function () {
+        var range = document.createRange();
+        range.selectNodeContents(viewText);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      });
+    });
+    viewDownload.addEventListener('click', function () {
+      var blob = new Blob([viewCurrent.text], { type: 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = viewCurrent.filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    });
+
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && gate.classList.contains('open')) closeGate();
+      if (e.key !== 'Escape') return;
+      if (viewModal.classList.contains('open')) { closeViewModal(); return; }
+      if (panel.classList.contains('open')) { closePanel(); return; }
+      if (gate.classList.contains('open')) { closeGate(); }
     });
   })();
 </script>
