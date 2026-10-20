@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15171A">
+<title>Forkcast</title>
+<meta name="description" content="Forkcast: search every Ohio State dining menu, rate dishes, flag what's actually out, and catch limited-time drops before they're gone.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{box-sizing:border-box}
+body{margin:0;padding:0}
+img{max-width:100%}
+[hidden]:not([hidden=until-found i]){display:none!important}
+/* Palette and type ported from jasmeh.me's own design system, so the app reads as
+   part of the same site rather than a bolted-on demo. Layout, data and behavior
+   below are unchanged from the live build. */
+:root{
+  color-scheme:dark;
+  --bg:#15171A; --surface:#1D2024; --ink:#ECE9E0; --muted:#9C988C; --line:#33363B;
+  --accent:#FF5B54; --accent-ink:#15171A; --accent-soft:rgba(255,91,84,0.16);
+  --lto:#E0925A; --lto-soft:#34241A; --danger:#960A26; --danger-soft:rgba(150,10,38,0.2);
+  --ok:#74AE86; --ok-soft:#1E2A20; --gray:#5B5750; --chip:#22252A; --shadow:0 10px 30px rgba(0,0,0,.6);
+  --display:"Spectral", Georgia, serif;
+  --body:"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r:8px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.86em}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;line-height:1.15}
+
+/* Header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-top:5px solid var(--accent);border-bottom:1px solid var(--line);box-shadow:inset 0 -3px 0 var(--gray)}
+.top .wrap{padding-block:12px 0;display:grid;gap:10px}
+.brandrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0;flex:1}
+.brand h1{font-size:1.55rem;font-weight:800;letter-spacing:-.02em}
+.brand h1 span{color:var(--accent)}
+.brand small{color:var(--muted);font-size:.82rem}
+.who{display:flex;align-items:center;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.88rem}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.badge-verified{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.searchrow{display:flex;gap:8px;flex-wrap:wrap}
+.search{flex:1 1 260px;min-width:0;display:flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:0 14px}
+.search input{flex:1;min-width:0;border:0;background:transparent;padding:11px 0;font-size:1rem;outline:none}
+.search svg{flex:none;opacity:.6}
+select.pill{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 12px;font-weight:700;max-width:100%}
+.back{flex:none;min-height:44px;padding:8px 16px;font-size:.95rem;border:2px solid var(--accent);color:var(--accent);background:var(--surface)}
+.back:not(:disabled):hover{background:var(--accent);color:var(--accent-ink)}
+.back:disabled{border-color:var(--line);color:var(--muted);opacity:.7}
+select.pill{font-size:16px;min-height:44px;-webkit-appearance:none;appearance:none;padding-right:34px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+#locSel{flex:0 1 240px;min-width:0;border-color:var(--accent);font-weight:800}
+#areaSel{flex:0 1 170px;min-width:0;font-weight:800}
+.area-h{display:flex;align-items:baseline;gap:10px;margin-top:6px;padding-bottom:4px;border-bottom:2px solid var(--accent)}
+.area-h h2{font-size:1.2rem;font-weight:800}
+.area-h span{color:var(--muted);font-size:.85rem}
+.search input{font-size:16px}
+@media (max-width:640px){
+  .searchrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #areaSel{order:-2;width:100%}
+  #locSel{order:-1;width:100%}
+  .search{grid-column:1 / -1}
+  .searchrow select.pill{width:100%}
+}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-top:2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:0;background:none;padding:10px 12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lto);margin-left:6px;vertical-align:middle}
+.tab .ti,.tab .sm,.tab-back{display:none}
+input,select,textarea{font-size:16px}
+.item:active,.card:active{background:var(--chip)}
+@media (max-width:640px){
+  /* app-style: header scrolls away, sections live in a bottom tab bar within thumb reach */
+  .top{position:relative;top:0}
+  .top .wrap{padding-block:10px 12px}
+  .brand h1{font-size:1.4rem}
+  #backBtn{display:none}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(0,0,0,.08);
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;overflow:visible;
+    padding:4px max(4px,env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px))}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 4px;min-height:52px;border-bottom:0;border-top:3px solid transparent;font-size:.68rem;position:relative;min-width:0}
+  .tab[aria-selected="true"]{border-bottom:0;border-top-color:var(--accent);color:var(--accent)}
+  .tab .ti{display:block}
+  .tab .lg{display:none}
+  .tab .sm{display:inline}
+  .tab .tl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .tab .dot{position:absolute;top:6px;right:calc(50% - 16px);margin:0}
+  .tab-back{display:flex}
+  .tab-back:disabled{opacity:.35}
+  .tab-back:not(:disabled){color:var(--accent)}
+  main .wrap{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .modal{top:max(24px,env(safe-area-inset-top,0px));transform:translateX(-50%)}
+  .loc-h{padding:12px}
+  .item{padding:12px}
+  .period-h{padding:6px 12px}
+  .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-inline:-4px;padding-inline:4px}
+  .filters::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:8px 13px}
+  .notice{flex-direction:column}
+  .notice button{margin-left:0}
+}
+
+main .wrap{padding-block:16px 60px;display:grid;gap:16px}
+.notice{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--lto);background:var(--lto-soft);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
+.notice b{font-weight:700}
+.notice button{margin-left:auto;flex:none}
+
+/* Filters */
+.filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filters .lab{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:.85rem;font-weight:700}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.allergen[aria-pressed="true"]{background:var(--danger);border-color:var(--danger);color:var(--surface)}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+details.more{width:100%}
+details.more summary{cursor:pointer;font-weight:700;font-size:.88rem;color:var(--accent);list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more[open] summary{margin-bottom:8px}
+
+.summary{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;color:var(--muted);font-size:.9rem}
+.summary strong{color:var(--ink)}
+
+/* Location blocks */
+.loc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.loc-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.loc-h h3{font-size:1.08rem;font-weight:800}
+.loc-h .where{color:var(--muted);font-size:.85rem}
+.loc-h .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.status{font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.status.open{background:var(--ok-soft);color:var(--ok)}
+.status.closed{background:var(--chip);color:var(--muted)}
+.period-h{padding:6px 16px;font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--muted);background:var(--chip)}
+.period-h .mono{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px}
+.item{display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:10px 16px}
+.item:first-of-type{border-top:0}
+.item:hover{background:var(--chip)}
+.item .nm{font-weight:700;min-width:0}
+.item .meta{grid-column:1;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;color:var(--muted);font-size:.82rem}
+.item .score{grid-row:1 / span 2;grid-column:2;align-self:center;text-align:right;font-size:.85rem;white-space:nowrap}
+.item .score b{font-family:var(--mono);font-size:1rem}
+.item .score .n{display:block;color:var(--muted);font-size:.75rem}
+.item.blocked .nm{text-decoration:line-through;text-decoration-color:var(--danger);text-decoration-thickness:2px;color:var(--muted)}
+.tag{font-size:.7rem;font-weight:700;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--ink);letter-spacing:.02em}
+.tag.lto{background:var(--lto);border-color:var(--lto);color:var(--accent-ink)}
+.tag.warn{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+.tag.al{border-color:var(--danger);color:var(--danger)}
+.stars{color:var(--lto);letter-spacing:1px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:28px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--ink);margin-bottom:6px}
+
+/* Location directory + panel */
+details.dir{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+details.dir summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+details.dir summary::-webkit-details-marker{display:none}
+details.dir summary h2{font-size:1.1rem;font-weight:800}
+details.dir summary .fine::after{content:" · Show";color:var(--accent);font-weight:700}
+details.dir[open] summary .fine::after{content:" · Hide"}
+.dir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 18px;margin-top:12px}
+.dir-area h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 4px}
+.dir-area ul{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.loclink{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;padding:6px 8px;border-radius:8px;font-weight:700;color:var(--ink)}
+.loclink:hover{background:var(--chip);color:var(--accent)}
+.loclink .d{width:8px;height:8px;border-radius:50%;flex:none;background:var(--gray)}
+.loclink .d.on{background:var(--ok)}
+.loclink .t{margin-left:auto;font-weight:400;font-size:.76rem;color:var(--muted);white-space:nowrap}
+.loclink span.nm2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:var(--r);padding:16px;display:grid;gap:12px}
+.lp-top{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.lp-top h2{font-size:1.5rem;font-weight:800}
+.lp-top .where{color:var(--muted);font-size:.9rem}
+.lp-top .btn{margin-left:auto}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.week div{background:var(--chip);border-radius:8px;padding:6px 4px;text-align:center;font-size:.72rem;min-width:0}
+.week div b{display:block;font-size:.78rem}
+.week div.today{background:var(--accent-soft);outline:2px solid var(--accent)}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.links a{color:var(--accent);font-weight:700;font-size:.88rem}
+.loc-h h3 button{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left}
+.loc-h h3 button:hover{color:var(--accent);text-decoration:underline}
+@media (max-width:520px){.week{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,16,12,.45);z-index:40}
+.drawer{position:fixed;z-index:41;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;
+  right:0;top:0;bottom:0;width:min(460px,100%);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+@media (max-width:640px){.drawer{top:auto;left:0;width:100%;max-height:88vh;max-height:88dvh;z-index:45;border-radius:18px 18px 0 0;padding-left:env(safe-area-inset-left,0px)}}
+.drawer-h{display:flex;gap:10px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line)}
+.drawer-h h2{font-size:1.35rem;font-weight:800}
+.drawer-h .sub{color:var(--muted);font-size:.88rem;margin-top:3px}
+.x{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:50%;width:34px;height:34px;flex:none;font-size:1.1rem;line-height:1}
+.drawer-b{overflow-y:auto;padding:16px 18px 28px;display:grid;gap:18px}
+.sect h4{font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 8px}
+.facts{display:flex;flex-wrap:wrap;gap:6px}
+.big{display:flex;align-items:center;gap:14px}
+.big .avg{font-family:var(--display);font-size:2.4rem;font-weight:800;line-height:1}
+.dist{display:grid;gap:3px;flex:1;min-width:0}
+.dist div{display:grid;grid-template-columns:14px 1fr 26px;gap:6px;align-items:center;font-size:.75rem;color:var(--muted)}
+.bar{height:7px;background:var(--chip);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--lto)}
+.starpick{display:flex;gap:4px}
+.starpick button{border:1px solid var(--line);background:var(--surface);width:42px;height:42px;border-radius:10px;font-size:1.2rem;color:var(--muted)}
+.starpick button.on{background:var(--lto-soft);border-color:var(--lto);color:var(--lto)}
+textarea,input.field{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;resize:vertical}
+.gate{background:var(--chip);border-radius:10px;padding:10px 12px;font-size:.88rem;color:var(--muted)}
+.gate b{color:var(--ink)}
+.flagbox{display:grid;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px}
+.flagbox .row{display:flex;gap:8px;flex-wrap:wrap}
+.review{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:2px}
+.review .who2{font-size:.8rem;color:var(--muted)}
+.fine{font-size:.78rem;color:var(--muted)}
+
+/* Modal */
+.modal{position:fixed;z-index:51;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:20px;display:grid;gap:12px}
+.modal h2{font-size:1.3rem}
+.err{color:var(--danger);font-size:.85rem;min-height:1.2em}
+
+/* LTO */
+.wave{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px}
+.wave .eyebrow{font-size:.74rem;text-transform:uppercase;letter-spacing:.09em;color:var(--lto);font-weight:700}
+.wave h2{font-size:1.6rem;font-weight:800}
+.timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.timeline div{border-radius:8px;padding:8px 10px;background:var(--chip);font-size:.8rem;min-width:0}
+.timeline div.now{background:var(--lto);color:var(--accent-ink)}
+.timeline div.past{opacity:.6}
+.timeline b{display:block;font-size:.88rem}
+.prog{height:8px;border-radius:5px;background:var(--chip);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--lto)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:6px;text-align:left;width:100%}
+button.card:hover{border-color:var(--accent)}
+.card h3{font-size:1.02rem;font-weight:800}
+.card .where2{font-size:.84rem;color:var(--muted)}
+
+/* Forum */
+.boards{display:flex;flex-wrap:wrap;gap:6px}
+.composer{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px}
+.composer .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px}
+.post .ph{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.post .ph b{color:var(--ink)}
+.post .body{white-space:pre-wrap;overflow-wrap:anywhere}
+.post .acts{display:flex;gap:12px;font-size:.82rem}
+.post .acts button{border:0;background:none;color:var(--muted);padding:0;font-weight:700}
+.post .acts button:hover{color:var(--accent)}
+.replies{display:grid;gap:6px;margin-left:14px;padding-left:12px;border-left:2px solid var(--line)}
+.hiddenpost{font-size:.85rem;color:var(--muted);font-style:italic}
+
+/* Insights */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.kpi b{display:block;font-family:var(--display);font-size:1.7rem;font-weight:800}
+.kpi span{font-size:.8rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td.num{font-family:var(--mono);text-align:right}
+tr:last-child td{border-bottom:0}
+.hbar{display:grid;gap:6px}
+.hbar div{display:grid;grid-template-columns:minmax(0,170px) 1fr 36px;gap:8px;align-items:center;font-size:.84rem}
+.hbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .bar{height:10px}
+.hbar .bar i{background:var(--accent)}
+
+/* About */
+.prose{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:10px;max-width:72ch}
+.prose h2{font-size:1.3rem}
+.prose p,.prose ul{margin:0}
+.pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.85rem}
+.pipe span{background:var(--chip);border-radius:8px;padding:6px 10px;font-weight:700}
+.pipe span.off{border:1px dashed var(--danger);background:var(--danger-soft);color:var(--danger)}
+.pipe i{font-style:normal;color:var(--muted)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:700;z-index:60;font-size:.9rem;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion: no-preference){
+  .drawer{animation:slide .22s ease-out}
+  @keyframes slide{from{transform:translateX(30px);opacity:.4}to{transform:none;opacity:1}}
+}
+@media (max-width:520px){.brand small{display:none}.loc-h .right{margin-left:0}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <button class="btn back" id="backBtn" aria-label="Go back">← Back</button>
+      <div class="brand"><h1>Fork<span>cast</span></h1><small>Every campus dining menu in one search</small></div>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="searchrow">
+      <label class="search" for="q">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Where's mac & cheese today? Try: halal tacos, smoothie, vegan" autocomplete="off">
+      </label>
+      <select id="date" class="pill" aria-label="Date"></select>
+      <select id="areaSel" class="pill" aria-label="Part of campus"></select>
+      <select id="locSel" class="pill" aria-label="Location"></select>
+      <select id="meal" class="pill" aria-label="Meal">
+        <option value="now">Open right now</option>
+        <option value="all">All day</option>
+        <option value="B">Breakfast</option>
+        <option value="L">Lunch</option>
+        <option value="D">Dinner</option>
+      </select>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab tab-back" id="backBtnM" aria-label="Go back"><svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="tl">Back</span></button>
+      <button class="tab" role="tab" data-view="menus" id="tab-menus"><svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="tl"><span class="lg">Menus</span><span class="sm">Menus</span></span></button>
+      <button class="tab" role="tab" data-view="lto" id="tab-lto"><svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.3l6-.8z"/></svg><span class="tl"><span class="lg">Limited-time</span><span class="sm">New</span></span><span class="dot" aria-hidden="true"></span></button>
+      <button class="tab" role="tab" data-view="forum" id="tab-forum"><svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="tl"><span class="lg">Forum</span><span class="sm">Forum</span></span></button>
+      <button class="tab" role="tab" data-view="dining" id="tab-dining"><svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span class="tl"><span class="lg">For Dining Services</span><span class="sm">Insights</span></span></button>
+      <button class="tab" role="tab" data-view="about" id="tab-about"><svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span class="tl"><span class="lg">About &amp; data</span><span class="sm">About</span></span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="notice" id="demoNotice">
+      <div><b>Proof of concept.</b> Locations are real; menu items, hours and nutrition are <b>demo data</b> in the same shape as the Nutrislice feed. Live menus switch on once Dining Services approves data access. Not affiliated with The Ohio State University.</div>
+      <span id="modeNote" class="fine" hidden></span>
+      <button class="btn ghost" id="hideNotice">Got it</button>
+    </div>
+
+    <section id="view-menus" hidden>
+      <div id="locPanel"></div>
+      <div class="filters" id="dietChips"></div>
+      <details class="more" id="moreFilters">
+        <summary>Allergens and display options</summary>
+        <div style="display:grid;gap:8px">
+          <div class="filters" id="allergenChips"></div>
+          <div class="filters"><button class="chip" id="hideBlocked" aria-pressed="false">Hide items with my allergens</button><button class="chip" id="openOnly" aria-pressed="false">Open locations only</button></div>
+          <p class="fine" style="margin:0">Allergen tags come from Dining Services. Cross-contact can happen and recipes can change at the last minute, so confirm with the on-site chef or manager if you have a severe allergy.</p>
+        </div>
+      </details>
+      <div class="summary" id="summary"></div>
+      <div id="results" style="display:grid;gap:12px"></div>
+    </section>
+
+    <section id="view-lto" hidden></section>
+    <section id="view-forum" hidden></section>
+    <section id="view-dining" hidden></section>
+    <section id="view-about" hidden></section>
+  </div>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-modal="true" role="dialog" aria-labelledby="dTitle"></aside>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+/* ============================================================
+   1. TIME (all logic runs on Columbus time)
+   ============================================================ */
+const TZ = "America/New_York";
+function nyNow(){
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23",weekday:"short"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  const date = `${p.year}-${p.month}-${p.day}`;
+  return {date, min: (+p.hour)*60 + (+p.minute), dow: dowOf(date)};
+}
+function dowOf(d){ const [y,m,dd]=d.split("-").map(Number); return new Date(Date.UTC(y,m-1,dd)).getUTCDay(); }
+function addDays(d,n){ const [y,m,dd]=d.split("-").map(Number); const t=new Date(Date.UTC(y,m-1,dd+n)); return t.toISOString().slice(0,10); }
+function fmtDate(d,opts={weekday:"short",month:"short",day:"numeric"}){ const [y,m,dd]=d.split("-").map(Number); return new Date(Date.UTC(y,m-1,dd,12)).toLocaleDateString("en-US",{...opts,timeZone:"UTC"}); }
+function fmtMin(m){ if(m>=1440) return "midnight"; let h=Math.floor(m/60), mi=m%60; const ap=h>=12?"pm":"am"; h=h%12||12; return mi?`${h}:${String(mi).padStart(2,"0")}${ap}`:`${h}${ap}`; }
+function daysBetween(a,b){ return Math.round((Date.parse(b+"T12:00:00Z")-Date.parse(a+"T12:00:00Z"))/864e5); }
+function ago(ts){ const s=Math.max(1,Math.round((Date.now()-ts)/1000)); if(s<60) return "just now"; if(s<3600) return Math.round(s/60)+" min ago"; if(s<86400) return Math.round(s/3600)+" hr ago"; return Math.round(s/86400)+" d ago"; }
+
+/* ============================================================
+   2. DATA — locations are real OSU dining locations; hours, items,
+      nutrition are DEMO values shaped like a Nutrislice menu feed.
+   ============================================================ */
+const DEMO_SNAPSHOT_SYNCED = "05:00"; // the production sync runs once a day before breakfast
+const DIET = {v:"Vegetarian", vg:"Vegan", h:"Halal", gf:"Made without gluten", k:"Kosher"};
+const DIET_SHORT = {v:"V", vg:"VG", h:"H", gf:"GF", k:"K"};
+const ALLERGEN = {mi:"Milk", eg:"Egg", wh:"Wheat", so:"Soy", pn:"Peanut", tn:"Tree nut", fi:"Fish", sh:"Shellfish", se:"Sesame"};
+const AREAS = {north:"North", south:"South", central:"Central / Union", west:"West / Ag", med:"Medical"};
+// hours: [open,close] minutes after midnight, per weekday group; null = closed
+const H = (wk,fri,sat,sun) => ({wk, fri:fri===undefined?wk:fri, sat:sat===undefined?null:sat, sun:sun===undefined?(sat===undefined?null:sat):sun});
+const LOCS = [
+  {id:"scott",   name:"Traditions at Scott", where:"Scott House", area:"north", kind:"trad", pool:"scott", hours:H([420,1200],[420,1200],[600,1200])},
+  {id:"kennedy", name:"Traditions at Kennedy", where:"251 W. 12th Ave", area:"south", kind:"trad", pool:"kennedy", hours:H([420,1320],[420,1200],[600,1200],[600,1320])},
+  {id:"morrill", name:"Traditions at Morrill", where:"Morrill Tower", area:"west", kind:"trad", pool:"morrill", hours:H([420,1260],[420,1200],[540,1200],[540,1260])},
+  {id:"neil",    name:"Marketplace on Neil", where:"1578 Neil Ave", area:"south", kind:"market", pool:"neil", hours:H([420,1320],[420,1200],[600,1200])},
+  {id:"union",   name:"Union Market", where:"The Ohio Union", area:"central", kind:"market", pool:"union", hours:H([480,1260],[480,1140],[660,1140])},
+  {id:"curl",    name:"Curl Market", where:"80 W. Woodruff Ave", area:"north", kind:"market", pool:"curl", hours:H([420,1380],[420,1200],[600,1260])},
+  {id:"sloopys", name:"Sloopy's Diner", where:"The Ohio Union", area:"central", kind:"diner", pool:"sloopys", hours:H([450,1440],[450,1440],[600,1440])},
+  {id:"woodys",  name:"Woody's Tavern", where:"The Ohio Union", area:"central", kind:"pub", pool:"woodys", hours:H([960,1380],[960,1320])},
+  {id:"espresoh",name:"Espress-OH", where:"The Ohio Union", area:"central", kind:"cafe", pool:"espresoh", hours:H([450,1080],[450,960],[600,960])},
+  {id:"berry",   name:"Berry Cafe", where:"Thompson Library", area:"central", kind:"cafe", pool:"cafe", hours:H([480,1260],[480,1020],[660,1020])},
+  {id:"terrabyte",name:"Terra Byte Cafe", where:"18th Ave Library", area:"central", kind:"cafe", pool:"cafe", hours:H([480,1320],[480,1020],[720,1200])},
+  {id:"mirror",  name:"Mirror Lake Eatery", where:"Pomerene Hall", area:"central", kind:"cafe", pool:"cafe", hours:H([450,1140],[450,900])},
+  {id:"crane",   name:"Crane Cafe", where:"Hagerty Hall", area:"central", kind:"cafe", pool:"cafe", hours:H([480,900],[480,840])},
+  {id:"mcpherson",name:"McPherson Cafe", where:"McPherson Lab", area:"central", kind:"cafe", pool:"cafe", hours:H([480,900],[480,840])},
+  {id:"connecting",name:"Connecting Grounds", where:"160 W. Woodruff Ave", area:"north", kind:"cafe", pool:"connecting", hours:H([420,1380],[420,1260],[540,1260])},
+  {id:"carmenton",name:"Café Carmenton", where:"Energy Advancement & Innovation Center", area:"west", kind:"cafe", pool:"cafe", hours:H([450,900],[450,840])},
+  {id:"cfaes",   name:"CFAES Cafe", where:"Agriculture Administration Bldg", area:"west", kind:"cafe", pool:"cafe", hours:H([450,840],[450,780])},
+  {id:"parker",  name:"Parker Café", where:"2015 Fyffe Rd", area:"west", kind:"cafe", pool:"cafe", hours:H([450,840],[450,780])},
+  {id:"coffey",  name:"The Coffey Road Café at Vet Med", where:"601 Vernon L Tharp St", area:"west", kind:"cafe", pool:"cafe", hours:H([450,840],[450,780])},
+  {id:"hamilton",name:"Hamilton Cafe", where:"Hamilton Hall", area:"med", kind:"cafe", pool:"cafe", hours:H([450,900],[450,840])},
+  {id:"postle",  name:"Postle Cafe", where:"305 W. 12th Ave", area:"med", kind:"cafe", pool:"cafe", hours:H([480,900],[480,840])},
+  {id:"juice",   name:"Juice", where:"RPAC", area:"central", kind:"juice", pool:"juice", hours:H([420,1200],[420,1080],[600,1080])},
+  {id:"juicenorth",name:"Juice North", where:"Scott House", area:"north", kind:"juice", pool:"juice", hours:H([600,1320],[600,1200],[720,1200])},
+  {id:"truck",   name:"Thyme & Change Food Truck", where:"Neil Ave & Annie and John Glenn Ave", area:"central", kind:"truck", pool:"truck", hours:H([660,900],[660,840])},
+  {id:"oxleys",  name:"Oxleys To Go", where:"Tuttle Garage", area:"central", kind:"cafe", pool:"oxleys", hours:H([660,1320],[660,1200],[720,1200])},
+];
+const LOC = Object.fromEntries(LOCS.map(l=>[l.id,l]));
+
+// item tuple: [name, station, calories, diets, allergens, flags]  flags: "core"=always served, "lto"=limited-time wave 2, "tue"=Tuesdays only, "!tue"=not Tuesday
+// periods: B breakfast, M main (lunch+dinner), A all day
+const POOLS = {
+ scott:{B:[
+  ["Made-to-Order Omelet","Omelet Station",310,"v gf","mi eg","core"],["Halal Chicken Tenders","Omelet Station",420,"h","wh eg so","core"],
+  ["Buttermilk Pancakes","Home",380,"v","mi eg wh"],["Scrambled Eggs","Home",180,"v gf","eg mi","core"],["Tofu Scramble","Home",210,"vg gf","so"],
+  ["Breakfast Potatoes","Home",220,"vg gf",""],["Biscuits & Sausage Gravy","Home",520,"","mi wh"],["Der Dutchman Cinnamon Roll","Bakery",450,"v","mi eg wh so"],["Blueberry Muffin","Bakery",380,"v","mi eg wh"]],
+  M:[
+  ["Halal Beef Burger","Grill",560,"h","wh se","core"],["Grilled Chicken Sandwich","Grill",470,"h","wh","core"],["Black Bean Burger","Grill",430,"vg","wh so"],["Seasoned Fries","Grill",330,"vg gf","","core"],
+  ["Tandoori Chicken","Mongo",380,"h gf","mi"],["Build-Your-Own Stir Fry","Mongo",520,"","so wh","core"],["Vegetable Lo Mein","Mongo",440,"vg","wh so se"],
+  ["Halal Ground Beef Tacos","Taco Bar",420,"h","mi wh","core"],["Chicken Tinga Bowl","Taco Bar",510,"gf","mi"],["Black Bean & Corn Burrito Bowl","Taco Bar",460,"vg gf",""],
+  ["Herb Roasted Chicken Legs","Home",390,"h gf",""],["Halal Meatballs Marinara","Home",450,"h","wh mi eg"],["Baked Mac & Cheese","Home",480,"v","mi wh eg"],["Pot Roast with Carrots","Home",410,"gf",""],
+  ["Chana Masala","Global",320,"vg gf",""],["Palak Paneer","Global",350,"v gf","mi"],["Vegetable Biryani","Global",390,"vg gf",""],
+  ["Pepperoni Pizza","Pizza",300,"","mi wh","core"],["Cheese Pizza","Pizza",270,"v","mi wh","core"],["Buffalo Chicken Pizza","Pizza",320,"","mi wh eg"],
+  ["Penne Alfredo","Pasta",540,"v","mi wh"],["Spiralized Zucchini Marinara","Pasta",180,"vg gf",""],
+  ["Tomato Basil Soup","Soup",160,"v gf","mi"],["Chicken Noodle Soup","Soup",140,"","wh eg"],
+  ["Fudge Brownie","Dessert",360,"v","mi eg wh so"],["Soft-Serve Ice Cream","Dessert",200,"v gf","mi","core"],["Salad Bar","Salad",0,"vg gf","","core"]]},
+ kennedy:{B:[
+  ["Belgian Waffle","Grill",410,"v","mi eg wh","core"],["Breakfast Burrito","Action Station",560,"","eg mi wh"],["Oatmeal Bar","Home",150,"vg","", "core"],["Scrambled Eggs","Home",180,"v gf","eg mi","core"],["Turkey Sausage Links","Home",150,"gf",""],["Hash Brown Patties","Home",160,"vg gf",""]],
+  M:[
+  ["Chicken Tenders","Grill",450,"h","wh eg","core"],["Smash Burger","Grill",590,"","wh mi se"],["Veggie Burger","Grill",410,"v","wh mi so"],
+  ["Street Taco Bar","Action Station",430,"h","wh"],["Pho Noodle Bowl","Action Station",410,"","fi so wh"],["Korean BBQ Rice Bowl","Action Station",560,"","so wh se"],["Falafel Pita","Action Station",480,"vg","wh se"],
+  ["Fried Chicken","Home",620,"","wh eg mi"],["Baked Mac & Cheese","Home",480,"v","mi wh eg"],["Roasted Salmon","Home",360,"gf","fi"],["Shepherd's Pie","Home",450,"gf","mi"],
+  ["Lentil Sweet Potato Curry","Solutions",330,"vg gf",""],["Quinoa Power Bowl","Solutions",380,"vg gf","tn"],
+  ["Oatmeal Raisin Cookie","Bakery",220,"v","mi eg wh"],["Salad Bar","Salad",0,"vg gf","","core"]]},
+ morrill:{B:[
+  ["Breakfast Sandwich","Entrée (order on Grubhub)",430,"","eg mi wh","core"],["Yogurt Parfait","Cold Bar",240,"v","mi tn","core"],["Fresh Fruit Cup","Cold Bar",80,"vg gf","","core"]],
+  M:[
+  ["Chicken Parmesan","Entrée (order on Grubhub)",620,"","mi wh eg"],["Teriyaki Salmon","Entrée (order on Grubhub)",400,"","fi so wh"],["Veggie Stir Fry","Entrée (order on Grubhub)",360,"vg","so"],["Halal Chicken Shawarma","Entrée (order on Grubhub)",510,"h","wh se mi"],
+  ["Rice Pilaf","Hot Bar",210,"vg gf","","core"],["Roasted Vegetables","Hot Bar",120,"vg gf","","core"],["Baked Mac & Cheese","Hot Bar",480,"v","mi wh eg"],["Salad Bar","Cold Bar",0,"vg gf","","core"]]},
+ neil:{A:[
+  ["Halal Meatball Pasta","Pasta",610,"h","wh mi eg","core"],["Taco Beef Tex-Mex Pasta","Pasta",640,"h","wh mi"],["Build-Your-Own Pasta","Pasta",520,"v","wh mi","core"],
+  ["Chicken Momos","Hot Bar",330,"h","wh so se"],["Build-Your-Own Pizza","Pizza",700,"v","wh mi","core"],["Cheeseburger","Grill",620,"","wh mi se","core"],["Grilled Cheese","Grill",450,"v","wh mi"],
+  ["Strawberry Banana Smoothie","Blenz",280,"vg gf","","core"],["Mango Boba Tea","Blenz",340,"v gf","mi","core"],["Turkey Club Wrap","Deli",520,"","wh eg","core"],
+  ["Hot Honey Chicken Sandwich","Grill",610,"","wh eg mi","lto"],["Pumpkin Pie Smoothie","Blenz",330,"v gf","mi","lto"]]},
+ union:{A:[
+  ["Kosher Chicken Shawarma Plate","Passport",540,"k gf","se","core"],["Butter Chicken","Hot Bar",480,"h gf","mi","tue"],["Roasted Veggie Hot Bar","Hot Bar",300,"vg gf","","!tue"],
+  ["Momo Dumplings","Momo Cart",320,"h","wh so","core"],["Halal Meatball Pasta","Pasta",590,"h","wh mi eg"],["Halal Beef Burger","Grill",560,"h","wh se","core"],["Halal Grilled Chicken","Grill",410,"h gf","","core"],
+  ["Mexican-Brazilian Fusion Tacos","Tacos",450,"gf","mi"],["Salad Bar","Salad & Yogurt Bar",0,"vg gf","","core"],["Yogurt Bar","Salad & Yogurt Bar",190,"v gf","mi tn","core"],
+  ["Mediterranean Chicken Bowl","Hot Bar",520,"h gf","se mi","lto"]]},
+ curl:{A:[
+  ["Halal Meatball Penne","Pasta",600,"h","wh mi eg","core"],["Spicy Chicken Sandwich","Grill",560,"","wh eg","core"],["Pepperoni Pizza","Pizza",300,"","mi wh","core"],
+  ["California Roll","Grab & Go",300,"","fi sh so se wh"],["Veggie Sushi Roll","Grab & Go",260,"vg","so se wh"],["Chicken Caesar Wrap","Grab & Go",480,"","mi eg fi wh","core"],
+  ["Nashville Hot Wings","Grill",640,"gf","mi","lto"]]},
+ sloopys:{A:[
+  ["Sloopy's Chocolate Chip Cookie","Bakery",260,"v","mi eg wh so","core"],["Classic Diner Burger","Grill",680,"","wh mi se","core"],["Pot Roast Melt","Diner Classics",620,"","wh mi"],
+  ["Blackened Mahi Mahi Sandwich","Diner Classics",480,"","fi wh","core"],["Buckeye Milkshake","Shakes",780,"v","mi pn so","core"],["Pancake Stack","Breakfast All Day",520,"v","mi eg wh","core"],
+  ["Blenz Berry Smoothie","Blenz",260,"vg gf","","core"],["Apple Cider Donut Shake","Shakes",720,"v","mi wh eg","lto"]]},
+ woodys:{A:[
+  ["Pepperoni Pizza Slice","Pizza",310,"","mi wh","core"],["Boneless Wings","Wings",590,"","wh mi","core"],["Loaded Nachos","Pub",780,"v gf","mi","core"],["Garlic Parm Wings","Wings",650,"gf","mi","lto"]]},
+ espresoh:{A:[
+  ["Build-Your-Own Breakfast Sandwich","Hot Breakfast",450,"","eg mi wh","core"],["Latte","Coffee",190,"v gf","mi","core"],["Der Dutchman Apple Fritter","Bakery",420,"v","wh mi eg so","core"],["Maple Pecan Latte","Coffee",280,"v gf","mi tn","lto"]]},
+ cafe:{A:[
+  ["Drip Coffee","Coffee",5,"vg gf","","core"],["Cold Brew","Coffee",10,"vg gf",""],["Chai Latte","Coffee",240,"v gf","mi"],["Der Dutchman Peanut Butter Cookie","Bakery",310,"v","pn wh eg mi"],
+  ["Turkey & Swiss Sandwich","Grab & Go",450,"","wh mi"],["Hummus Veggie Wrap","Grab & Go",390,"vg","wh se"],["Chicken Caesar Salad","Grab & Go",420,"","mi eg fi wh"],
+  ["Bagel with Cream Cheese","Bakery",380,"v","wh mi"],["Fresh Fruit Cup","Grab & Go",80,"vg gf",""],["Greek Yogurt Parfait","Grab & Go",240,"v","mi tn"],
+  ["Pumpkin Cream Cold Brew","Coffee",250,"v gf","mi","lto"],["Turkey Cranberry Wrap","Grab & Go",480,"","wh mi","lto"]]},
+ connecting:{A:[
+  ["Nitro Cold Brew","Coffee",5,"vg gf","","core"],["Pour-Over Coffee","Coffee",5,"vg gf","","core"],["Oat Milk Latte","Coffee",170,"vg gf","","core"],["Der Dutchman Cinnamon Roll","Bakery",450,"v","mi eg wh so"],["Pumpkin Cream Cold Brew","Coffee",250,"v gf","mi","lto"]]},
+ juice:{A:[
+  ["Green Machine Smoothie","Smoothies",290,"vg gf","","core"],["Acai Bowl","Bowls",420,"vg gf","tn","core"],["PB Protein Smoothie","Smoothies",410,"v gf","pn mi","core"],["Mango Tango Smoothie","Smoothies",300,"vg gf","","core"]]},
+ truck:{A:[
+  ["Halal Chicken Tacos","Tacos",430,"h","wh","tue"],["Halal Beef Tacos","Tacos",470,"h","wh","tue"],["Korean Fried Chicken Bowl","Bowls",640,"","wh so se","!tue"],["Veggie Rice Bowl","Bowls",420,"vg gf","so","!tue"]]},
+ oxleys:{A:[
+  ["Donatos Pepperoni Pizza","Pizza",330,"","mi wh","core"],["Donatos Cheese Pizza","Pizza",300,"v","mi wh","core"],["Garden Salad","Grab & Go",150,"vg gf",""],["Chicken Bacon Ranch Wrap","Grab & Go",560,"","wh mi eg"]]},
+};
+// limited-time waves announced by Dining Services for fall 2026
+const WAVES = [{n:1,start:"2026-09-21",end:"2026-10-18"},{n:2,start:"2026-10-19",end:"2026-11-09"},{n:3,start:"2026-11-10",end:"2026-12-06"}];
+const LTO_WAVE = 2; // demo LTO items belong to the current wave
+
+function hashStr(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
+function rng(seed){ let a=seed>>>0; return ()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+function slug(s){ return s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); }
+function waveOf(date){ return WAVES.find(w=>date>=w.start && date<=w.end); }
+
+function hoursFor(loc,dow){ return dow===0?loc.hours.sun: dow===6?loc.hours.sat: dow===5?loc.hours.fri: loc.hours.wk; }
+function periodsFor(loc,dow){
+  const h = hoursFor(loc,dow); if(!h) return [];
+  if(loc.kind!=="trad") return [{p:"A",name:"All day",start:h[0],end:h[1]}];
+  const wkend = dow===0||dow===6;
+  const out=[];
+  if(!wkend) out.push({p:"B",name:"Breakfast",start:h[0],end:630});
+  out.push({p:"L",name:wkend?"Brunch":"Lunch",start:wkend?h[0]:630,end:960});
+  out.push({p:"D",name:"Dinner",start:960,end:h[1]});
+  return out.filter(x=>x.end>x.start);
+}
+const MEAL_WIN = {B:[420,630],L:[630,960],D:[960,1440]};
+
+const menuCache = new Map();
+function buildMenu(date){
+  if(menuCache.has(date)) return menuCache.get(date);
+  const dow = dowOf(date), wave = waveOf(date), out=[];
+  for(const loc of LOCS){
+    const pool = POOLS[loc.pool]; if(!pool) continue;
+    for(const per of periodsFor(loc,dow)){
+      const src = per.p==="A" ? pool.A : per.p==="B" ? pool.B : pool.M;
+      if(!src) continue;
+      const r = rng(hashStr(date+loc.id+per.p));
+      // rotate: keep "core" items, then a seeded share of the rest per station
+      const byStation = {};
+      for(const t of src){ (byStation[t[1]] ||= []).push(t); }
+      for(const st in byStation){
+        const list = byStation[st];
+        const core = list.filter(t=>(t[5]||"").includes("core"));
+        const rot = list.filter(t=>!(t[5]||"").includes("core")).map(t=>[r(),t]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+        const take = loc.kind==="trad" ? Math.max(1,Math.ceil(rot.length*0.6)) : rot.length;
+        for(const t of [...core, ...rot.slice(0,take)]){
+          const f = t[5]||"";
+          if(f.includes("lto") && (!wave || wave.n!==LTO_WAVE)) continue;
+          if(f.includes("!tue")){ if(dow===2) continue; } else if(f.includes("tue") && dow!==2) continue;
+          const itemId = slug(loc.id+"-"+t[0]);
+          out.push({key:`${itemId}|${date}|${per.p}`, itemId, date, loc:loc.id, p:per.p, period:per.name, pStart:per.start, pEnd:per.end,
+            name:t[0], station:t[1], cal:t[2], diets:t[3]?t[3].split(" "):[], allergens:t[4]?t[4].split(" "):[], lto:f.includes("lto")});
+        }
+      }
+    }
+  }
+  menuCache.set(date,out); return out;
+}
+const ITEM_INDEX = new Map(); // itemId -> {name, loc, station, lto}
+function indexItem(it){ if(!ITEM_INDEX.has(it.itemId)) ITEM_INDEX.set(it.itemId,{name:it.name,loc:it.loc,station:it.station,lto:it.lto}); }
+
+/* ============================================================
+   3. STORE — shared ratings, flags and forum via the artifact
+      database; falls back to this browser only when unavailable.
+   ============================================================ */
+const COLS = ["ratings","flags","posts","reports"];
+// Three layers, read together: RS = shared database, LS = this device (try-it mode), SS = sample activity for demos
+class Merged{ constructor(...m){ this.m=m; } get(k){ for(const x of this.m) if(x.has(k)) return x.get(k); } has(k){ return this.m.some(x=>x.has(k)); }
+  *entries(){ const seen=new Set(); for(const x of this.m) for(const e of x.entries()){ if(seen.has(e[0])) continue; seen.add(e[0]); yield e; } }
+  *values(){ for(const [,v] of this.entries()) yield v; } [Symbol.iterator](){ return this.entries(); } get size(){ let n=0; for(const _ of this.entries()) n++; return n; } }
+const RS={}, LS={}, SS={}, S={};
+for(const c of ["ratings","flags","posts","reports"]){ RS[c]=new Map(); LS[c]=new Map(); SS[c]=new Map(); S[c]=new Merged(RS[c],LS[c],SS[c]); }
+function saveLocal(col){ const o={}; for(const [k,v] of LS[col]) o[k]=v; lsSet("fc."+col,o); }
+let DB = null, USER = null, UID = null, MODE = "loading", CAN_WRITE = true;
+function lsGet(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function safeId(s){ return String(s).replace(/[^A-Za-z0-9_\-]/g,"").slice(0,60) || "anon"; }
+
+async function initStore(){
+  try{
+    const c = window.claude;
+    DB = c && c.use ? await c.use("db") : null;
+    USER = c && c.use ? await c.use("user") : null;
+  }catch(e){ DB=null; }
+  if(USER){ try{ UID = await USER.id(); }catch(e){} try{ const w = await USER.can("data.write"); if(w===false) CAN_WRITE=false; }catch(e){} }
+  if(!UID){ UID = lsGet("fc.localId",null) || ("local-"+Math.random().toString(36).slice(2,10)); lsSet("fc.localId",UID); }
+  for(const col of COLS){ const o=lsGet("fc."+col,{}); for(const k in o) LS[col].set(k,o[k]); }
+  loadSamplesIfOn();
+  if(DB){
+    MODE = CAN_WRITE ? "shared" : "tryit";
+    for(const col of COLS){
+      DB.collection(col).onSnapshot(snap=>{
+        const m = RS[col]; m.clear();
+        for(const d of snap.docs){ if(d.exists) m.set(d.id, d.data()); }
+        scheduleRender();
+      }, ()=>{ toast("Lost the live connection. Reload to reconnect."); });
+    }
+  } else {
+    MODE="local";
+  }
+  scheduleRender();
+}
+async function put(col,id,data){
+  if(MODE==="shared"){
+    try{ await DB.collection(col).doc(id).set(data); return true; }
+    catch(e){
+      if(e && e.code==="invalid_argument"){ MODE="tryit"; toast("Saved on this device only. You have view access to the shared version."); }
+      else if(e && e.code==="quota_exceeded"){ toast("Storage is full. Ask the owner to archive old posts."); return false; }
+      else { toast("Couldn't save. Check your connection and try again."); return false; }
+    }
+  }
+  LS[col].set(id,data); saveLocal(col); scheduleRender(); return true;
+}
+async function del(col,id){
+  if(LS[col].has(id)){ LS[col].delete(id); saveLocal(col); scheduleRender(); return; }
+  if(SS[col].has(id)){ SS[col].delete(id); scheduleRender(); return; }
+  if(MODE==="shared"){ try{ await DB.collection(col).doc(id).delete(); }catch(e){ toast("Couldn't delete. Try again."); } }
+}
+/* ---------- sample activity (demo only, never saved to the shared database) ---------- */
+function samplesOn(){ return !!lsGet("fc.samples",false); }
+function loadSamplesIfOn(){ for(const c in SS) SS[c].clear(); if(!samplesOn()) return; buildSamples(); }
+function buildSamples(){
+  const now=nyNow(), r=rng(hashStr("forkcast-sample-v1"));
+  const notes=["Actually really good today","Portion was small","Would get again","A little dry but solid","Best thing on North right now","Long line but worth it","Too salty this time","Fresh and fast","Hit or miss, today was a hit",""];
+  for(let back=0; back<4; back++){
+    const d=addDays(now.date,-back);
+    const items=buildMenu(d).filter(it=>back>0 || now.min>=it.pStart); items.forEach(indexItem);
+    for(const it of items){
+      if(r()>0.35) continue;
+      const bias = (hashStr(it.itemId)%5)/4; // some dishes trend better than others
+      const n = 1+Math.floor(r()*4);
+      for(let i=0;i<n;i++){
+        const uid="sample-"+(1+Math.floor(r()*40));
+        const stars=Math.max(1,Math.min(5,Math.round(2.4+bias*2.4+(r()-.5)*2)));
+        SS.ratings.set(safeId(`${it.itemId}_${d}_${uid}`),{itemId:it.itemId,loc:it.loc,date:d,period:it.p,stars,text:r()<.35?notes[Math.floor(r()*notes.length)]:"",uid,ts:Date.now()-back*864e5-Math.floor(r()*36e5),sample:true});
+      }
+    }
+  }
+  const live=buildMenu(now.date).filter(it=>now.min>=it.pStart && now.min<it.pEnd);
+  live.slice(0,3).forEach((it,i)=>{ for(let k=0;k<3;k++){ const uid="sample-"+(41+i*3+k); SS.flags.set(safeId(`${it.itemId}_${now.date}_${uid}`),{itemId:it.itemId,loc:it.loc,date:now.date,status:k<2?"missing":"here",uid,ts:Date.now()-k*6e5,sample:true}); } });
+  const posts=[["recs","Scott's tandoori chicken at Mongo was really good tonight. Go before 7."],["general","Is Woody's open this weekend? Hours look different."],["requests","Can Kennedy bring back the Korean BBQ bowl more often?"],["recs","Union Market momo cart is the move between classes."]];
+  posts.forEach(([b,t],i)=>SS.posts.set("sample-post-"+i,{board:b,body:t,parentId:null,uid:"sample-"+(60+i),ts:Date.now()-(i+1)*52e5,sample:true}));
+  SS.posts.set("sample-reply-0",{board:"general",body:"Closed Sat and Sun this semester.",parentId:"sample-post-1",uid:"sample-70",ts:Date.now()-3e6,sample:true});
+}
+
+/* ---------- identity: OSU-verified, anonymous handle ---------- */
+function auth(){ return lsGet("fc.auth",null); }
+function signedIn(){ const a=auth(); return !!(a && a.verified); }
+function handleFor(uid){ const h=hashStr(String(uid)).toString(16).toUpperCase().padStart(8,"0"); return "Buckeye "+h.slice(0,4); }
+
+/* ---------- aggregates ---------- */
+function ratingsFor(itemId){
+  const list=[]; for(const [id,r] of S.ratings) if(r.itemId===itemId) list.push({id,...r});
+  list.sort((a,b)=>b.ts-a.ts);
+  const dist=[0,0,0,0,0]; let sum=0; for(const r of list){ dist[r.stars-1]++; sum+=r.stars; }
+  return {list, n:list.length, avg:list.length?sum/list.length:0, dist};
+}
+function flagsFor(itemId,date){
+  let missing=0, here=0, last=0, mine=null;
+  for(const [id,f] of S.flags){ if(f.itemId!==itemId || f.date!==date) continue; if(f.status==="missing") missing++; else here++; last=Math.max(last,f.ts); if(f.uid===UID) mine=f.status; }
+  return {missing,here,last,mine};
+}
+function reportCount(postId){ let n=0; for(const r of S.reports.values()) if(r.postId===postId) n++; return n; }
+const HIDE_AT = 3;
+
+/* ============================================================
+   4. STATE + ROUTING
+   ============================================================ */
+const today = nyNow().date;
+const st = Object.assign({view:"menus", q:"", date:today, meal:"now", diets:[], allergens:[], area:"", hideBlocked:false, openOnly:false, board:"all", loc:null},
+  (()=>{ const s=lsGet("fc.prefs",{}); return {diets:s.diets||[], allergens:s.allergens||[], hideBlocked:!!s.hideBlocked}; })());
+function savePrefs(){ lsSet("fc.prefs",{diets:st.diets, allergens:st.allergens, hideBlocked:st.hideBlocked}); }
+const VIEWS=["menus","lto","forum","dining","about"];
+function setView(v){
+  if(!VIEWS.includes(v)) v="menus"; st.view=v;
+  for(const x of VIEWS){ document.getElementById("view-"+x).hidden = x!==v; document.getElementById("tab-"+x).setAttribute("aria-selected", x===v?"true":"false"); }
+  const tok = (v==="menus" && st.loc) ? st.loc : v;
+  try{ if(location.hash!=="#"+tok) history.replaceState(null,"","#"+tok); }catch(e){}
+  render();
+}
+let rq=0; function scheduleRender(){ if(rq) return; rq=requestAnimationFrame(()=>{ rq=0; render(); if(openKey) renderDrawer(); }); }
+
+/* ============================================================
+   5. MENUS VIEW
+   ============================================================ */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STOP = new Set("where wheres is are the a an any some today tonight now find i want get can me for at on with what whats there near to of on campus food something".split(" "));
+const QDIET = {vegan:"vg", vegetarian:"v", veggie:"v", halal:"h", kosher:"k", "gluten-free":"gf", glutenfree:"gf", gf:"gf"};
+function parseQuery(q){
+  const words = q.toLowerCase().replace(/[’']/g,"").replace(/&/g," and ").split(/[^a-z0-9\-]+/).filter(Boolean);
+  const diets=[], terms=[];
+  for(const w of words){ if(QDIET[w]) diets.push(QDIET[w]); else if(!STOP.has(w) && w!=="and") terms.push(w.replace(/s$/,"")); }
+  return {diets, terms};
+}
+function locOpenAt(loc,date,min){ const h=hoursFor(loc,dowOf(date)); return !!h && min>=h[0] && min<h[1]; }
+
+function filteredItems(){
+  const items = buildMenu(st.date); items.forEach(indexItem);
+  const now = nyNow(); const isToday = st.date===now.date;
+  const pq = parseQuery(st.q);
+  const needDiets = [...new Set([...st.diets, ...pq.diets])];
+  return items.filter(it=>{
+    const loc=LOC[it.loc];
+    if(st.loc && it.loc!==st.loc) return false;
+    if(!st.loc && st.area && loc.area!==st.area) return false;
+    if(st.meal==="now"){ if(!isToday) { /* "now" on a future day means all day */ } else if(!(now.min>=it.pStart && now.min<it.pEnd)) return false; }
+    else if(st.meal!=="all"){
+      if(it.p==="A"){ const w=MEAL_WIN[st.meal]; if(!(it.pStart<w[1] && it.pEnd>w[0])) return false; }
+      else if(it.p!==st.meal) return false;
+    }
+    if(st.openOnly && isToday && !locOpenAt(loc,st.date,now.min)) return false;
+    for(const d of needDiets){ if(d==="v"){ if(!(it.diets.includes("v")||it.diets.includes("vg"))) return false; } else if(!it.diets.includes(d)) return false; }
+    if(pq.terms.length){
+      const hay = (it.name+" "+it.station+" "+loc.name+" "+loc.where).toLowerCase().replace(/&/g,"and");
+      for(const t of pq.terms) if(!hay.includes(t)) return false;
+    }
+    if(st.hideBlocked && it.allergens.some(a=>st.allergens.includes(a))) return false;
+    return true;
+  });
+}
+
+function starsTxt(avg){ const f=Math.round(avg); return "★".repeat(f)+"☆".repeat(5-f); }
+function itemRow(it){
+  const r = ratingsFor(it.itemId);
+  const fl = it.date===today ? flagsFor(it.itemId,it.date) : {missing:0,here:0};
+  const blocked = it.allergens.filter(a=>st.allergens.includes(a));
+  const tags = [];
+  if(it.lto) tags.push(`<span class="tag lto">Limited time</span>`);
+  if(fl.missing>=2 && fl.missing>fl.here) tags.push(`<span class="tag warn">Reported not out</span>`);
+  for(const d of it.diets) tags.push(`<span class="tag" title="${DIET[d]}">${DIET_SHORT[d]}</span>`);
+  if(blocked.length) tags.push(`<span class="tag al">Contains ${blocked.map(a=>ALLERGEN[a].toLowerCase()).join(", ")}</span>`);
+  return `<button class="item${blocked.length?" blocked":""}" data-key="${esc(it.key)}">
+    <span class="nm">${esc(it.name)}</span>
+    <span class="meta"><span>${esc(it.station)}</span>${it.cal?`<span class="mono">${it.cal} cal</span>`:""}${tags.join("")}</span>
+    <span class="score">${r.n?`<b>${r.avg.toFixed(1)}</b> <span class="stars">★</span><span class="n">${r.n} rating${r.n>1?"s":""}</span>`:`<span class="n">No ratings yet</span>`}</span>
+  </button>`;
+}
+function statusHTML(loc,date){
+  const now=nyNow(), h=hoursFor(loc,dowOf(date));
+  if(date!==now.date) return h?`<span class="status closed">${fmtMin(h[0])}–${fmtMin(h[1])}</span>`:`<span class="status closed">Closed this day</span>`;
+  if(locOpenAt(loc,date,now.min)) return `<span class="status open">Open until ${fmtMin(h[1])}</span>`;
+  return h && now.min<h[0] ? `<span class="status closed">Opens ${fmtMin(h[0])}</span>` : `<span class="status closed">Closed now</span>`;
+}
+function shortStatus(loc){
+  const now=nyNow(), h=hoursFor(loc,now.dow);
+  if(locOpenAt(loc,now.date,now.min)) return {on:true, t:"until "+fmtMin(h[1])};
+  return {on:false, t: h && now.min<h[0] ? "opens "+fmtMin(h[0]) : "closed"};
+}
+const OFFICIAL = [["Official menus (Nutrislice)","https://osu.nutrislice.com/menu"],["Dining Services locations","https://dining.osu.edu/dms/dininglocations"]];
+function renderLocPanel(){
+  if(!st.loc){ $("#locPanel").innerHTML=""; return; }
+  const loc=LOC[st.loc], now=nyNow();
+  const days = Array.from({length:7},(_,i)=>addDays(now.date,i));
+  const r = {n:0,sum:0}; for(const x of S.ratings.values()) if(x.loc===loc.id){ r.n++; r.sum+=x.stars; }
+  $("#locPanel").innerHTML = `<div class="lp">
+    <div class="lp-top"><div><h2>${esc(loc.name)}</h2><div class="where">${esc(loc.where)} · ${AREAS[loc.area]} campus ${r.n?` · <b class="mono">${(r.sum/r.n).toFixed(1)}</b> <span class="stars">★</span> from ${r.n} rating${r.n>1?"s":""}`:""}</div></div>${statusHTML(loc,now.date)}<button class="btn" data-back>← Back</button></div>
+    <div class="week" aria-label="Hours this week">${days.map(d=>{ const h=hoursFor(loc,dowOf(d)); return `<div class="${d===st.date?"today":""}"><b>${d===now.date?"Today":fmtDate(d,{weekday:"short"})}</b><span class="mono">${h?fmtMin(h[0])+"–"+fmtMin(h[1]):"Closed"}</span></div>`; }).join("")}</div>
+    <div class="links">${OFFICIAL.map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join("")}<span class="fine">Hours shown are demo values.</span></div>
+  </div>`;
+}
+const NAV=[];
+function snap(){ return {view:st.view, loc:st.loc, area:st.area, date:st.date, meal:st.meal, q:st.q}; }
+function navPush(){ const s=snap(), last=NAV[NAV.length-1]; if(!last || JSON.stringify(last)!==JSON.stringify(s)) NAV.push(s); if(NAV.length>40) NAV.shift(); }
+function canGoBack(){ return !!openKey || NAV.length>0 || !!st.loc || !!st.area || st.view!=="menus"; }
+function updateBack(){ for(const b of [$("#backBtn"),$("#backBtnM")]){ if(!b) continue; b.disabled = !canGoBack(); b.title = b.disabled ? "You're on the main screen" : "Go back"; } }
+function goBack(){
+  if(!$("#modal").hidden){ closeModal(); return; }
+  if(openKey){ closeDrawer(); updateBack(); return; }
+  const s = NAV.pop() || {view:"menus", loc:null, area:"", date:st.date, meal:st.meal, q:st.q};
+  Object.assign(st, s);
+  fillLocSel(); $("#date").value = st.date; $("#meal").value = st.meal; $("#q").value = st.q;
+  setView(st.view);
+  window.scrollTo({top:0});
+}
+function fillLocSel(){
+  const areas = Object.entries(AREAS).filter(([a])=>!st.area || a===st.area);
+  $("#locSel").innerHTML = `<option value="">${st.area?"All "+AREAS[st.area]+" locations":"All locations"}</option>` + areas.map(([a,label])=>`<optgroup label="${label}">${LOCS.filter(l=>l.area===a).sort((x,y)=>x.name.localeCompare(y.name)).map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join("")}</optgroup>`).join("");
+  $("#locSel").value = st.loc||""; $("#areaSel").value = st.area||"";
+}
+function selectLoc(id){
+  navPush();
+  st.loc = id && LOC[id] ? id : null;
+  if(st.loc && st.area && LOC[st.loc].area!==st.area){ st.area=LOC[st.loc].area; }
+  fillLocSel();
+  if(st.loc && st.meal==="now"){ st.meal="all"; $("#meal").value="all"; }
+  $("#locSel").value = st.loc||"";
+  if(st.view!=="menus") setView("menus"); else { setView("menus"); }
+  window.scrollTo({top:0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+function renderMenus(){
+  renderLocPanel();
+  const now=nyNow(), isToday=st.date===now.date;
+  const items = filteredItems();
+  const byLoc = new Map();
+  for(const it of items){ if(!byLoc.has(it.loc)) byLoc.set(it.loc,[]); byLoc.get(it.loc).push(it); }
+  const AORD = Object.keys(AREAS);
+  const locs = [...byLoc.keys()].map(id=>LOC[id]).sort((a,b)=>{
+    const oa = isToday&&locOpenAt(a,st.date,now.min)?0:1, ob = isToday&&locOpenAt(b,st.date,now.min)?0:1;
+    return (AORD.indexOf(a.area)-AORD.indexOf(b.area)) || oa-ob || a.name.localeCompare(b.name);
+  });
+  const mealTxt = {now: isToday?"open right now":"all day", all:"all day", B:"at breakfast", L:"at lunch", D:"at dinner"}[st.meal];
+  $("#summary").innerHTML = `<span><strong>${items.length}</strong> item${items.length===1?"":"s"} at <strong>${locs.length}</strong> location${locs.length===1?"":"s"} ${st.area&&!st.loc?`on ${AREAS[st.area]} campus `:""}${mealTxt}, ${esc(fmtDate(st.date))}${st.q?` matching “${esc(st.q)}”`:""}</span>
+    <span class="mono">Menus synced ${isToday?"today":"for "+fmtDate(st.date,{month:"short",day:"numeric"})} at ${DEMO_SNAPSHOT_SYNCED}</span>`;
+  if(!locs.length){
+    if(st.loc){ const h=hoursFor(LOC[st.loc],dowOf(st.date)); $("#results").innerHTML = `<div class="empty"><h3>${h?"Nothing matches here":"Closed this day"}</h3><p>${h?"Clear your search or diet filters, or set the meal menu to “All day”.":"Pick another date, or browse another location."}</p></div>`; return; }
+    const hint = st.meal==="now" && isToday ? `Nothing matches at locations open right now (${fmtMin(now.min)}). Switch the meal menu to “All day” to see later service.` : "Try a shorter search, or clear diet and area filters.";
+    $("#results").innerHTML = `<div class="empty"><h3>No matches</h3><p>${hint}</p></div>`; return;
+  }
+  let lastArea=null;
+  $("#results").innerHTML = locs.map(loc=>{
+    let ah="";
+    if(!st.loc && loc.area!==lastArea){ lastArea=loc.area; const n=locs.filter(l=>l.area===loc.area).length; ah=`<div class="area-h"><h2>${AREAS[loc.area]} campus</h2><span>${n} location${n===1?"":"s"}</span></div>`; }
+    const its = byLoc.get(loc.id); const h=hoursFor(loc,dowOf(st.date));
+    const status = statusHTML(loc,st.date);
+    const groups = new Map(); for(const it of its){ const k=it.p; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(it); }
+    const body = [...groups.entries()].map(([p,list])=>{
+      const head = (loc.kind==="trad") ? `<div class="period-h">${esc(list[0].period)}<span class="mono">${fmtMin(list[0].pStart)}–${fmtMin(list[0].pEnd)}</span></div>` : "";
+      list.sort((a,b)=>(b.lto-a.lto) || a.station.localeCompare(b.station) || a.name.localeCompare(b.name));
+      return head + list.map(itemRow).join("");
+    }).join("");
+    return ah+`<article class="loc"><div class="loc-h"><h3>${esc(loc.name)}</h3><span class="where">${esc(loc.where)} · ${AREAS[loc.area]}</span><span class="right">${status}</span></div>${body}</article>`;
+  }).join("");
+}
+
+/* ---------- filter chips ---------- */
+function chip(label,pressed,attrs,cls="chip"){ return `<button class="${cls}" aria-pressed="${pressed}" ${attrs}>${label}</button>`; }
+function renderChips(){
+  $("#dietChips").innerHTML = `<span class="lab">Diet</span>` + Object.entries(DIET).map(([k,v])=>chip(v,st.diets.includes(k),`data-diet="${k}"`)).join("");
+  $("#allergenChips").innerHTML = `<span class="lab">Avoid</span>` + Object.entries(ALLERGEN).map(([k,v])=>chip(v,st.allergens.includes(k),`data-allergen="${k}"`,"chip allergen")).join("");
+  $("#hideBlocked").setAttribute("aria-pressed",st.hideBlocked); $("#openOnly").setAttribute("aria-pressed",st.openOnly);
+  const n = st.allergens.length + (st.openOnly?1:0);
+  $("#moreFilters summary").textContent = "Allergens and display options" + (n?` (${n} on)`:"");
+}
+function toggleIn(arr,v){ const i=arr.indexOf(v); i<0?arr.push(v):arr.splice(i,1); }
+
+/* ============================================================
+   6. ITEM DRAWER — ratings (gated by meal time), "not out" flags,
+      item discussion
+   ============================================================ */
+let openKey=null, pickStars=0;
+function findItem(key){ const [itemId,date,p]=key.split("|"); return buildMenu(date).find(i=>i.key===key); }
+function rateGate(it){
+  const now=nyNow();
+  if(!signedIn()) return {ok:false, why:`<b>Verify your OSU email</b> to rate. It keeps ratings to real students.`, signin:true};
+  if(it.date>now.date) return {ok:false, why:`<b>Not served yet.</b> You can rate this once ${esc(it.period.toLowerCase())} starts on ${esc(fmtDate(it.date))}.`};
+  if(it.date===now.date && now.min<it.pStart) return {ok:false, why:`<b>Not served yet.</b> Ratings open when ${esc(it.period.toLowerCase())} starts at ${fmtMin(it.pStart)}.`};
+  if(daysBetween(it.date,now.date)>3) return {ok:false, why:`Ratings close 3 days after a meal so they reflect what was actually served.`};
+  return {ok:true};
+}
+function flagGate(it){
+  const now=nyNow();
+  if(it.date!==now.date) return {ok:false, why:"Availability reports are for today's menu only."};
+  if(now.min<it.pStart || now.min>=it.pEnd) return {ok:false, why:`You can report this while ${esc(it.period.toLowerCase())} is being served (${fmtMin(it.pStart)}–${fmtMin(it.pEnd)}).`};
+  if(!signedIn()) return {ok:false, why:`<b>Verify your OSU email</b> to report what's out.`, signin:true};
+  return {ok:true};
+}
+function openDrawer(key){ openKey=key; pickStars=0; $("#scrim").hidden=false; $("#drawer").hidden=false; renderDrawer(); updateBack(); setTimeout(()=>{ const x=$("#drawer .x"); x&&x.focus(); },30); }
+function closeDrawer(){ openKey=null; $("#scrim").hidden=true; $("#drawer").hidden=true; if(document.getElementById("backBtn")) updateBack(); }
+function renderDrawer(){
+  const it = findItem(openKey); if(!it){ closeDrawer(); return; }
+  const loc = LOC[it.loc], r = ratingsFor(it.itemId), fl = flagsFor(it.itemId,it.date);
+  const myId = safeId(`${it.itemId}_${it.date}_${UID}`), mine = S.ratings.get(myId);
+  if(mine && !pickStars) pickStars = mine.stars;
+  const rg = rateGate(it), fg = flagGate(it);
+  const max = Math.max(1,...r.dist);
+  const thread = [...S.posts.entries()].filter(([id,p])=>p.board==="item:"+it.itemId && !p.parentId).sort((a,b)=>b[1].ts-a[1].ts);
+  const other = buildMenu(it.date).filter(x=>x.name===it.name && x.loc!==it.loc);
+  const draftKey = "fc.draft."+it.itemId;
+  $("#drawer").innerHTML = `
+    <div class="drawer-h"><div><h2 id="dTitle">${esc(it.name)}</h2><div class="sub">${esc(loc.name)} · ${esc(it.station)} · ${esc(it.period)} ${fmtMin(it.pStart)}–${fmtMin(it.pEnd)}, ${esc(fmtDate(it.date))}</div></div><button class="x" aria-label="Close">×</button></div>
+    <div class="drawer-b">
+      <div class="sect"><div class="facts">
+        ${it.lto?`<span class="tag lto">Limited time · wave ${LTO_WAVE} ends ${fmtDate(WAVES[LTO_WAVE-1].end,{month:"short",day:"numeric"})}</span>`:""}
+        ${it.cal?`<span class="tag mono">${it.cal} cal</span>`:""}
+        ${it.diets.map(d=>`<span class="tag">${DIET[d]}</span>`).join("")}
+        ${it.allergens.length?it.allergens.map(a=>`<span class="tag al">${ALLERGEN[a]}</span>`).join(""):`<span class="tag">No top-9 allergens listed</span>`}
+      </div><p class="fine" style="margin:8px 0 0">Allergen and nutrition data come from Dining Services. Confirm with the on-site chef if you have a severe allergy.</p></div>
+
+      <div class="sect"><h4>Is it actually out?</h4>
+        <div class="flagbox">
+          <div>${fl.missing||fl.here?`<b>${fl.here}</b> student${fl.here===1?"":"s"} saw it · <b>${fl.missing}</b> said it's not out <span class="fine">· last report ${ago(fl.last)}</span>`:`<span class="fine">No reports yet today.</span>`}</div>
+          ${fg.ok?`<div class="row"><button class="btn${fl.mine==="here"?" primary":""}" data-flag="here">I see it here</button><button class="btn${fl.mine==="missing"?" primary":""}" data-flag="missing">Not out right now</button></div>`:`<div class="gate">${fg.why}${fg.signin?` <button class="btn primary" data-signin style="margin-left:6px">Verify</button>`:""}</div>`}
+        </div>
+      </div>
+
+      <div class="sect"><h4>Student ratings</h4>
+        <div class="big"><div class="avg">${r.n?r.avg.toFixed(1):"–"}</div>
+          <div class="dist">${[5,4,3,2,1].map(s=>`<div><span>${s}</span><span class="bar"><i style="width:${(r.dist[s-1]/max)*100}%"></i></span><span class="mono">${r.dist[s-1]}</span></div>`).join("")}</div>
+        </div>
+        <p class="fine" style="margin:6px 0 0">${r.n} rating${r.n===1?"":"s"} across every day this dish was served here.</p>
+      </div>
+
+      <div class="sect"><h4>${mine?"Your rating (tap to change)":"Rate it"}</h4>
+        ${rg.ok?`<div style="display:grid;gap:8px">
+          <div class="starpick" role="radiogroup" aria-label="Stars">${[1,2,3,4,5].map(s=>`<button role="radio" aria-checked="${s===pickStars}" aria-label="${s} star${s>1?"s":""}" data-star="${s}" class="${s<=pickStars?"on":""}">★</button>`).join("")}</div>
+          <textarea id="rText" rows="2" maxlength="280" placeholder="Optional: what was good or off? (280 characters)">${esc(mine?mine.text||"":lsGet(draftKey,""))}</textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="saveRating" ${pickStars?"":"disabled"}>${mine?"Update rating":"Post rating"}</button>${mine?`<button class="btn ghost" id="delRating">Remove mine</button>`:""}</div>
+          <p class="fine" style="margin:0">Posted as ${esc(handleFor(UID))}. Your email is never shown.</p>
+        </div>`:`<div class="gate">${rg.why}${rg.signin?` <button class="btn primary" data-signin style="margin-left:6px">Verify</button>`:""}</div>`}
+      </div>
+
+      ${r.list.filter(x=>x.text).length?`<div class="sect"><h4>Recent reviews</h4>${r.list.filter(x=>x.text).slice(0,8).map(x=>`<div class="review"><div><span class="stars">${starsTxt(x.stars)}</span></div><div>${esc(x.text)}</div><div class="who2">${x.sample?`<span class="tag">Sample</span> `:""}${esc(handleFor(x.uid))} · ate it ${esc(fmtDate(x.date,{month:"short",day:"numeric"}))}</div></div>`).join("")}</div>`:""}
+
+      ${other.length?`<div class="sect"><h4>Also on the menu today at</h4><div class="facts">${other.map(o=>`<button class="chip" data-key="${esc(o.key)}">${esc(LOC[o.loc].name)}</button>`).join("")}</div></div>`:""}
+
+      <div class="sect"><h4>Discussion</h4>
+        ${thread.length?thread.slice(0,5).map(([id,p])=>postHTML(id,p,true)).join(""):`<p class="fine" style="margin:0 0 8px">No posts about this dish yet.</p>`}
+        <button class="btn" data-goforum="item:${esc(it.itemId)}">Open in forum</button>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   7. LIMITED-TIME VIEW
+   ============================================================ */
+function renderLTO(){
+  const now=nyNow(); const w = waveOf(now.date);
+  const next = WAVES.find(x=>x.start>now.date);
+  const cur = w || next || WAVES[WAVES.length-1];
+  const len = daysBetween(cur.start,cur.end)+1, done = w?daysBetween(cur.start,now.date)+1:0;
+  const ltoToday = new Map();
+  for(let i=0;i<7;i++){ for(const it of buildMenu(addDays(now.date,i))){ if(it.lto && !ltoToday.has(it.itemId)) ltoToday.set(it.itemId,it); } }
+  const all = [...ltoToday.values()];
+  const byName = new Map(); for(const it of all){ if(!byName.has(it.name)) byName.set(it.name,{it,locs:new Set(),ids:new Set()}); const g=byName.get(it.name); g.locs.add(LOC[it.loc].name); g.ids.add(it.itemId); }
+  const items = [...byName.values()];
+  $("#view-lto").innerHTML = `<div style="display:grid;gap:14px">
+    <div class="wave">
+      <div class="eyebrow">${w?`Wave ${w.n} of 3 is on now`:"Between waves"}</div>
+      <h2>${w?`${items.length} limited-time items until ${fmtDate(w.end,{month:"long",day:"numeric"})}`:"New limited-time items are coming"}</h2>
+      <div class="prog" aria-label="Wave progress"><i style="width:${w?Math.round(done/len*100):0}%"></i></div>
+      <div class="fine">${w?`Day ${done} of ${len}. `:""}${next?`Next refresh in ${daysBetween(now.date,next.start)} days (${fmtDate(next.start,{month:"short",day:"numeric"})}).`:"This is the last wave of the semester."}</div>
+      <div class="timeline">${WAVES.map(x=>`<div class="${w&&x.n===w.n?"now":(x.end<now.date?"past":"")}"><b>Wave ${x.n}</b>${fmtDate(x.start,{month:"short",day:"numeric"})} – ${fmtDate(x.end,{month:"short",day:"numeric"})}</div>`).join("")}</div>
+      <p class="fine" style="margin:0">Dining Services refreshes café and marketplace menus on Sep 21, Oct 19 and Nov 10 this fall. Items below are demo examples.</p>
+    </div>
+    <div class="grid2">${items.map(({it,locs,ids})=>{ let n=0,sum=0; for(const id of ids){ const r=ratingsFor(id); n+=r.n; sum+=r.avg*r.n; } const L=[...locs];
+      return `<button class="card" data-key="${esc(it.key)}"><span class="tag lto" style="justify-self:start">Limited time</span><h3>${esc(it.name)}</h3><span class="where2">${esc(L.slice(0,3).join(", "))}${L.length>3?` and ${L.length-3} more`:""} · ${esc(it.station)}</span><span>${n?`<b class="mono">${(sum/n).toFixed(1)}</b> <span class="stars">★</span> <span class="fine">${n} rating${n>1?"s":""}</span>`:`<span class="fine">Be the first to rate it</span>`}</span></button>`; }).join("")}</div>
+  </div>`;
+}
+
+/* ============================================================
+   8. FORUM — OSU-verified posting, anonymous handles,
+      report-to-hide moderation, rate limit, privacy filters
+   ============================================================ */
+const BOARDS = {general:"General", recs:"Recommendations", requests:"Menu requests for Dining"};
+const BAD = /\b(fuck|shit|bitch|asshole|cunt|retard|fag)\w*/i;
+const PII = /([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})|(\b\d{3}[\s.-]?\d{3}[\s.-]?\d{4}\b)/;
+function boardLabel(b){ if(b.startsWith("item:")){ const m=ITEM_INDEX.get(b.slice(5)); return m?`${m.name} · ${LOC[m.loc].name}`:"Dish discussion"; } return BOARDS[b]||b; }
+function postHTML(id,p,compact){
+  const reps = reportCount(id);
+  const repliedMine = S.reports.has(safeId(id+"_"+UID));
+  if(reps>=HIDE_AT) return `<div class="post"><div class="hiddenpost">Hidden after ${reps} student reports. Moderators review hidden posts.</div></div>`;
+  const kids = compact?[]:[...S.posts.entries()].filter(([,c])=>c.parentId===id).sort((a,b)=>a[1].ts-b[1].ts);
+  return `<div class="post" data-post="${esc(id)}">
+    <div class="ph">${p.sample?`<span class="tag">Sample</span>`:""}<b>${esc(handleFor(p.uid))}</b>${p.uid===UID?"<span>(you)</span>":""}<span>· ${ago(p.ts)}</span>${!compact&&!p.parentId?`<span>· ${esc(boardLabel(p.board))}</span>`:""}</div>
+    <div class="body">${esc(p.body)}</div>
+    <div class="acts">${!compact&&!p.parentId?`<button data-reply="${esc(id)}">Reply</button>`:""}${p.uid===UID?`<button data-delpost="${esc(id)}">Delete</button>`:`<button data-report="${esc(id)}" ${repliedMine?"disabled":""}>${repliedMine?"Reported":"Report"}</button>`}</div>
+    ${kids.length?`<div class="replies">${kids.map(([cid,c])=>postHTML(cid,c,true)).join("")}</div>`:""}
+    <div class="replybox" data-replybox="${esc(id)}" hidden></div>
+  </div>`;
+}
+function validatePost(body){
+  body = body.trim();
+  if(body.length<3) return "Write at least a few words.";
+  if(body.length>500) return "Keep posts under 500 characters.";
+  if(BAD.test(body)) return "Please rephrase without profanity or slurs.";
+  if(PII.test(body)) return "Remove email addresses and phone numbers. Posts are public to students.";
+  const last = lsGet("fc.lastPost",0); if(Date.now()-last<20000) return `Slow down a little. You can post again in ${Math.ceil((20000-(Date.now()-last))/1000)} seconds.`;
+  return null;
+}
+async function submitPost(board,body,parentId){
+  if(!signedIn()){ openSignin(); return false; }
+  const err = validatePost(body); if(err){ toast(err); return false; }
+  const id = safeId("p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  const ok = await put("posts",id,{board, body:body.trim(), parentId:parentId||null, uid:UID, ts:Date.now()});
+  if(ok){ lsSet("fc.lastPost",Date.now()); toast(parentId?"Reply posted":"Posted"); }
+  return ok;
+}
+function renderForum(){
+  const all = [...S.posts.entries()].filter(([,p])=>!p.parentId);
+  const boards = new Set(all.map(([,p])=>p.board).filter(b=>b.startsWith("item:")));
+  if(st.board.startsWith("item:")) boards.add(st.board);
+  const shown = all.filter(([,p])=>st.board==="all"||p.board===st.board).sort((a,b)=>b[1].ts-a[1].ts);
+  const opts = Object.entries(BOARDS).map(([k,v])=>`<option value="${k}" ${st.board===k?"selected":""}>${v}</option>`).join("") + [...boards].map(b=>`<option value="${esc(b)}" ${st.board===b?"selected":""}>${esc(boardLabel(b))}</option>`).join("");
+  const keepDraft = $("#postBody") ? $("#postBody").value : lsGet("fc.forumDraft","");
+  $("#view-forum").innerHTML = `<div style="display:grid;gap:12px">
+    <div class="boards">${chip("Everything",st.board==="all",`data-board="all"`)}${Object.entries(BOARDS).map(([k,v])=>chip(v,st.board===k,`data-board="${k}"`)).join("")}${[...boards].map(b=>chip(esc(boardLabel(b)),st.board===b,`data-board="${esc(b)}"`)).join("")}</div>
+    <div class="composer">
+      ${signedIn()?`
+        <label class="fine" for="postBody">Posting as <b>${esc(handleFor(UID))}</b>. Only verified OSU students can post; your email stays private.</label>
+        <textarea id="postBody" rows="3" maxlength="500" placeholder="Ask where something is, share a find, or request a dish for Dining Services">${esc(keepDraft)}</textarea>
+        <div class="row"><select id="postBoard" class="pill" aria-label="Board">${opts}</select><button class="btn primary" id="postBtn">Post</button><span class="fine" style="margin-left:auto">Be kind. Posts with ${HIDE_AT} reports are hidden automatically.</span></div>`
+      :`<div class="gate"><b>Verify your OSU email to post.</b> Anyone can read the forum. <button class="btn primary" data-signin style="margin-left:6px">Verify</button></div>`}
+    </div>
+    ${shown.length?shown.map(([id,p])=>postHTML(id,p,false)).join(""):`<div class="empty"><h3>No posts here yet</h3><p>Start the conversation: which dining hall had the best dinner this week?</p></div>`}
+  </div>`;
+}
+
+/* ============================================================
+   9. FOR DINING SERVICES — anonymized insights (the pitch)
+   ============================================================ */
+function insights(){
+  const byItem = new Map();
+  for(const r of S.ratings.values()){ const o = byItem.get(r.itemId)||{sum:0,n:0}; o.sum+=r.stars; o.n++; byItem.set(r.itemId,o); }
+  const flagsBy = new Map(); for(const f of S.flags.values()){ if(f.status!=="missing") continue; flagsBy.set(f.itemId,(flagsBy.get(f.itemId)||0)+1); }
+  const rows = [...byItem.entries()].map(([id,o])=>{ const m=ITEM_INDEX.get(id)||{name:id,loc:"",station:""}; return {id,name:m.name,loc:LOC[m.loc]?LOC[m.loc].name:"",station:m.station,lto:m.lto,avg:o.sum/o.n,n:o.n,missing:flagsBy.get(id)||0}; });
+  const byLoc = new Map(); for(const r of rows){ byLoc.set(r.loc,(byLoc.get(r.loc)||0)+r.n); }
+  const reviewers = new Set([...S.ratings.values()].map(r=>r.uid)).size;
+  return {rows, byLoc, reviewers, flags:[...S.flags.values()].filter(f=>f.status==="missing").length, posts:S.posts.size, requests:[...S.posts.values()].filter(p=>p.board==="requests").length};
+}
+function renderDining(){
+  for(let i=-3;i<7;i++) buildMenu(addDays(today,i)).forEach(indexItem);
+  const d = insights();
+  const top = [...d.rows].sort((a,b)=>b.avg-a.avg||b.n-a.n).slice(0,8);
+  const low = [...d.rows].filter(r=>r.n>=1).sort((a,b)=>a.avg-b.avg||b.n-a.n).slice(0,5);
+  const miss = [...d.rows].filter(r=>r.missing).sort((a,b)=>b.missing-a.missing).slice(0,5);
+  const lto = d.rows.filter(r=>r.lto).sort((a,b)=>b.avg-a.avg);
+  const locMax = Math.max(1,...d.byLoc.values());
+  const tbl = (rows,cols)=> rows.length?`<div class="tablewrap"><table><thead><tr>${cols.map(c=>`<th>${c[0]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c[2]||""}">${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:`<div class="empty" style="padding:16px"><p style="margin:0">Fills in as students rate dishes.</p></div>`;
+  $("#view-dining").innerHTML = `<div style="display:grid;gap:14px">
+    <div class="prose" style="max-width:none"><h2>What students think, by dish</h2><p>Every number here is anonymous and aggregated: no names, no emails. This is the feedback loop Forkcast offers Dining Services in exchange for a live menu feed.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn${samplesOn()?"":" primary"}" id="toggleSamples">${samplesOn()?"Remove sample activity":"Load sample activity"}</button><span class="fine">${samplesOn()?"Showing made-up sample ratings so you can see how this looks with real use. Only on this device.":"Fill the site with made-up sample ratings, reports and posts to see it in use. Only on this device."}</span></div></div>
+    <div class="kpis">
+      <div class="kpi"><b>${S.ratings.size}</b><span>ratings</span></div>
+      <div class="kpi"><b>${d.reviewers}</b><span>students rating</span></div>
+      <div class="kpi"><b>${d.flags}</b><span>“not out” reports</span></div>
+      <div class="kpi"><b>${d.requests}</b><span>menu requests</span></div>
+    </div>
+    <div class="sect"><h4>Highest rated</h4>${tbl(top,[["Dish",r=>esc(r.name)],["Location",r=>esc(r.loc)],["Avg",r=>r.avg.toFixed(2),"num"],["Ratings",r=>r.n,"num"]])}</div>
+    <div class="sect"><h4>Needs attention</h4>${tbl(low,[["Dish",r=>esc(r.name)],["Location",r=>esc(r.loc)],["Avg",r=>r.avg.toFixed(2),"num"],["Ratings",r=>r.n,"num"]])}</div>
+    <div class="sect"><h4>Limited-time items so far</h4>${tbl(lto,[["Dish",r=>esc(r.name)],["Location",r=>esc(r.loc)],["Avg",r=>r.avg.toFixed(2),"num"],["Ratings",r=>r.n,"num"]])}</div>
+    <div class="sect"><h4>Listed on the menu but reported not out</h4>${tbl(miss,[["Dish",r=>esc(r.name)],["Location",r=>esc(r.loc)],["Reports",r=>r.missing,"num"]])}</div>
+    <div class="sect"><h4>Ratings by location</h4>${d.byLoc.size?`<div class="hbar">${[...d.byLoc.entries()].sort((a,b)=>b[1]-a[1]).map(([l,n])=>`<div><span>${esc(l)}</span><span class="bar"><i style="width:${n/locMax*100}%"></i></span><span class="mono">${n}</span></div>`).join("")}</div>`:`<p class="fine">No ratings yet.</p>`}</div>
+    <div><button class="btn primary" id="copyCsv">Copy anonymized CSV</button> <span class="fine">Paste into Excel or Sheets.</span></div>
+  </div>`;
+}
+
+/* ============================================================
+   10. ABOUT & DATA
+   ============================================================ */
+function renderAbout(){
+  const mode = MODE==="shared" ? "Shared: ratings, reports and posts are saved for everyone who opens this page." : MODE==="tryit" ? "Try-it mode: you can see everyone's activity, but your own ratings and posts are saved on this device only." : MODE==="local" ? "This browser only: the shared database isn't available here, so activity is saved on this device." : "Connecting…";
+  $("#view-about").innerHTML = `<div style="display:grid;gap:14px">
+    <div class="prose"><h2>How Forkcast works</h2>
+      <div class="pipe"><span class="off">Nutrislice menu feed</span><i>→</i><span>Sync once a day, 5am</span><i>→</i><span>Forkcast menu cache</span><i>→</i><span>Search, filters, ratings</span></div>
+      <p>Students never hit Dining's systems directly. One scheduled job copies the day's menus into Forkcast's own cache, so traffic on our side never reaches theirs. The red box is the piece that's switched off until Dining Services approves access; this demo uses a local snapshot in the same format.</p>
+    </div>
+    <div class="prose"><h2>Built-in safeguards</h2><ul>
+      <li><b>Real students only.</b> Rating, reporting and posting need a verified @osu.edu email. Everyone shows as an anonymous handle.</li>
+      <li><b>Ratings match what was served.</b> You can't rate a meal before it starts, and ratings close 3 days after.</li>
+      <li><b>Menus can be wrong.</b> During service, students can mark a dish as out or confirm they see it. Two or more “not out” reports flag the item for everyone.</li>
+      <li><b>Allergy safety.</b> Allergen tags come straight from Dining Services, with their cross-contact warning. Forkcast never edits allergen data.</li>
+      <li><b>Moderation.</b> Profanity and personal info (emails, phone numbers) are blocked, posting is rate-limited, and posts hide automatically after ${HIDE_AT} reports.</li>
+      <li><b>Feedback goes back to Dining.</b> The “For Dining Services” tab turns ratings into anonymous dish-level data.</li>
+    </ul></div>
+    <div class="prose"><h2>Status</h2>
+      <p><b>Saving:</b> ${esc(mode)}</p>
+      <p><b>Menu data:</b> Demo snapshot. Location names are real; items, hours and nutrition are examples.</p>
+      <p><b>Email check:</b> Demo. The live version emails a one-time code to your @osu.edu address.</p>
+      <p class="fine">Forkcast is an independent student project and is not affiliated with or endorsed by The Ohio State University or Ohio State Dining Services.</p>
+      <div><button class="btn" id="resetLocal">Sign out and clear my saved filters</button></div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   11. SIGN-IN (demo of @osu.edu verification)
+   ============================================================ */
+const OSU_EMAIL = /^[a-z][a-z'-]*\.[0-9]{1,4}@(buckeyemail\.)?osu\.edu$/i;
+function openSignin(){
+  const m=$("#modal"); $("#scrim").hidden=false; m.hidden=false;
+  m.innerHTML = `<h2 id="mTitle">Verify you're an OSU student</h2>
+    <p class="fine" style="margin:0">Use your name.# address. Your email stays private; others only see an anonymous handle.</p>
+    <label for="em" class="fine">OSU email</label><input class="field" id="em" type="email" placeholder="lastname.1@osu.edu" autocomplete="email">
+    <div id="codeStep" hidden><label for="code" class="fine">6-digit code</label><input class="field mono" id="code" inputmode="numeric" maxlength="6" placeholder="000000"><p class="fine" style="margin:4px 0 0">Demo: no email is sent. Enter any 6 digits.</p></div>
+    <div class="err" id="mErr"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" id="mCancel">Cancel</button><button class="btn primary" id="mNext">Send code</button></div>`;
+  setTimeout(()=>$("#em").focus(),30);
+}
+function closeModal(){ $("#modal").hidden=true; if(!openKey) $("#scrim").hidden=true; }
+function renderWho(){
+  $("#who").innerHTML = signedIn() ? `<span class="badge-verified" title="Verified OSU student">✓ ${esc(handleFor(UID))}</span>` : `<button class="btn primary" data-signin>Verify OSU email</button>`;
+}
+
+/* ============================================================
+   12. RENDER + EVENTS
+   ============================================================ */
+function render(){
+  renderWho(); renderChips(); updateBack();
+  const mn=$("#modeNote"); if(mn){ const t = MODE==="tryit"||MODE==="local" ? "Try-it mode: anything you rate or post stays on your device." : ""; mn.textContent=t; mn.hidden=!t; }
+  if(st.view==="menus") renderMenus();
+  else if(st.view==="lto") renderLTO();
+  else if(st.view==="forum") renderForum();
+  else if(st.view==="dining") renderDining();
+  else if(st.view==="about") renderAbout();
+}
+let tmr; function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(tmr); tmr=setTimeout(()=>t.hidden=true,2600); }
+
+function init(){
+  // dates: today + 6 days
+  $("#date").innerHTML = Array.from({length:7},(_,i)=>{ const d=addDays(today,i); return `<option value="${d}">${i===0?"Today":i===1?"Tomorrow":fmtDate(d)}</option>`; }).join("");
+  $("#areaSel").innerHTML = `<option value="">All of campus</option>` + Object.entries(AREAS).map(([a,label])=>`<option value="${a}">${label} campus</option>`).join("");
+  fillLocSel();
+  $("#locSel").addEventListener("change",e=>selectLoc(e.target.value||null));
+  $("#areaSel").addEventListener("change",e=>{ navPush(); st.area=e.target.value; st.loc=null; fillLocSel(); setView("menus"); window.scrollTo({top:0}); });
+  $("#date").value = st.date; $("#meal").value = st.meal;
+  if(lsGet("fc.noticeHidden",false)) $("#demoNotice").hidden=true;
+
+  let qt; $("#q").addEventListener("input",e=>{ clearTimeout(qt); qt=setTimeout(()=>{ st.q=e.target.value.trim(); if(st.view!=="menus") setView("menus"); else renderMenus(); },120); });
+  $("#date").addEventListener("change",e=>{ st.date=e.target.value; if(st.date!==today && st.meal==="now"){ st.meal="all"; $("#meal").value="all"; } if(st.view!=="menus") setView("menus"); else render(); });
+  $("#meal").addEventListener("change",e=>{ st.meal=e.target.value; if(st.meal==="now" && st.date!==today){ st.date=today; $("#date").value=today; } if(st.view!=="menus") setView("menus"); else render(); });
+  $("#hideNotice").addEventListener("click",()=>{ $("#demoNotice").hidden=true; lsSet("fc.noticeHidden",true); });
+  document.querySelectorAll(".tab[data-view]").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.view!==st.view){ navPush(); setView(b.dataset.view); } }));
+  $("#backBtn").addEventListener("click",goBack); $("#backBtnM").addEventListener("click",goBack);
+  $("#scrim").addEventListener("click",()=>{ if(!$("#modal").hidden) closeModal(); else closeDrawer(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(!$("#modal").hidden) closeModal(); else if(openKey) closeDrawer(); } });
+
+  document.addEventListener("click", async e=>{
+    const t = e.target.closest("button"); if(!t) return;
+    const ds = t.dataset;
+    if(ds.diet){ toggleIn(st.diets,ds.diet); savePrefs(); render(); return; }
+    if(ds.allergen){ toggleIn(st.allergens,ds.allergen); savePrefs(); render(); return; }
+    if(t.id==="hideBlocked"){ st.hideBlocked=!st.hideBlocked; savePrefs(); render(); return; }
+    if(t.id==="openOnly"){ st.openOnly=!st.openOnly; render(); return; }
+    if(ds.loc){ if(openKey) closeDrawer(); selectLoc(ds.loc); return; }
+    if("back" in ds){ goBack(); return; }
+    if(ds.key){ openDrawer(ds.key); return; }
+    if(t.classList.contains("x")){ closeDrawer(); return; }
+    if("signin" in ds){ openSignin(); return; }
+    if(t.id==="mCancel"){ closeModal(); return; }
+    if(t.id==="mNext"){
+      const em=$("#em").value.trim(), err=$("#mErr");
+      if($("#codeStep").hidden){ if(!OSU_EMAIL.test(em)){ err.textContent="Use your OSU name.# address, like lastname.1@osu.edu."; return; } err.textContent=""; $("#codeStep").hidden=false; $("#em").disabled=true; t.textContent="Verify"; setTimeout(()=>$("#code").focus(),30); return; }
+      if(!/^\d{6}$/.test($("#code").value.trim())){ err.textContent="Enter the 6-digit code."; return; }
+      lsSet("fc.auth",{verified:true, at:Date.now()}); // the address itself is not stored or shared
+      closeModal(); toast("Verified. You can rate, report and post."); render(); if(openKey) renderDrawer(); return;
+    }
+    if(ds.star){ pickStars=+ds.star; const it=findItem(openKey); const txt=$("#rText")?$("#rText").value:""; renderDrawer(); if($("#rText")) $("#rText").value=txt; return; }
+    if(t.id==="saveRating"){
+      const it=findItem(openKey); const g=rateGate(it); if(!g.ok||!pickStars) return;
+      const text=($("#rText").value||"").trim().slice(0,280);
+      if(text && BAD.test(text)){ toast("Please rephrase without profanity or slurs."); return; }
+      if(text && PII.test(text)){ toast("Remove email addresses and phone numbers."); return; }
+      t.disabled=true;
+      const ok = await put("ratings", safeId(`${it.itemId}_${it.date}_${UID}`), {itemId:it.itemId, loc:it.loc, date:it.date, period:it.p, stars:pickStars, text, uid:UID, ts:Date.now()});
+      if(ok){ try{ localStorage.removeItem("fc.draft."+it.itemId); }catch(_){} toast("Rating saved"); }
+      renderDrawer(); return;
+    }
+    if(t.id==="delRating"){ const it=findItem(openKey); pickStars=0; await del("ratings", safeId(`${it.itemId}_${it.date}_${UID}`)); toast("Rating removed"); renderDrawer(); return; }
+    if(ds.flag){ const it=findItem(openKey); if(!flagGate(it).ok) return; const id=safeId(`${it.itemId}_${it.date}_${UID}`); const cur=flagsFor(it.itemId,it.date).mine;
+      if(cur===ds.flag){ await del("flags",id); toast("Report removed"); } else { await put("flags",id,{itemId:it.itemId, loc:it.loc, date:it.date, status:ds.flag, uid:UID, ts:Date.now()}); toast("Thanks, that helps everyone"); }
+      renderDrawer(); return; }
+    if(ds.goforum){ closeDrawer(); navPush(); st.board=ds.goforum; setView("forum"); return; }
+    if(ds.board){ st.board=ds.board; renderForum(); return; }
+    if(t.id==="postBtn"){ const board=$("#postBoard").value; const ok=await submitPost(board,$("#postBody").value,null); if(ok){ $("#postBody").value=""; try{localStorage.removeItem("fc.forumDraft");}catch(_){} st.board=board; renderForum(); } return; }
+    if(ds.reply){ if(!signedIn()){ openSignin(); return; } const box=document.querySelector(`[data-replybox="${CSS.escape(ds.reply)}"]`); box.hidden=!box.hidden; if(!box.hidden){ box.innerHTML=`<div class="composer" style="padding:10px"><textarea rows="2" maxlength="500" id="rb-${esc(ds.reply)}" placeholder="Write a reply"></textarea><div class="row"><button class="btn primary" data-sendreply="${esc(ds.reply)}">Reply</button></div></div>`; box.querySelector("textarea").focus(); } return; }
+    if(ds.sendreply){ const parent=S.posts.get(ds.sendreply); const ta=document.getElementById("rb-"+ds.sendreply); if(await submitPost(parent.board, ta.value, ds.sendreply)) renderForum(); return; }
+    if(ds.report){ if(!signedIn()){ openSignin(); return; } await put("reports", safeId(ds.report+"_"+UID), {postId:ds.report, uid:UID, ts:Date.now()}); toast("Reported. Thanks for keeping it friendly."); render(); return; }
+    if(ds.delpost){ const p=S.posts.get(ds.delpost); if(p && p.uid===UID){ await del("posts",ds.delpost); toast("Post deleted"); render(); } return; }
+    if(t.id==="copyCsv"){ const d=insights(); const csv="dish,location,station,avg_rating,ratings,not_out_reports\n"+d.rows.map(r=>[r.name,r.loc,r.station,r.avg.toFixed(2),r.n,r.missing].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+      try{ await navigator.clipboard.writeText(csv); toast("CSV copied"); }catch(_){ const ta=document.createElement("textarea"); ta.value=csv; ta.style.cssText="position:fixed;left:0;bottom:0;width:100%;height:120px;z-index:70"; document.body.appendChild(ta); ta.select(); toast("Select-all is ready: press copy, then click away"); ta.addEventListener("blur",()=>ta.remove()); } return; }
+    if(t.id==="toggleSamples"){ lsSet("fc.samples",!samplesOn()); loadSamplesIfOn(); toast(samplesOn()?"Sample activity loaded":"Sample activity removed"); render(); return; }
+    if(t.id==="resetLocal"){ ["fc.auth","fc.prefs","fc.noticeHidden"].forEach(k=>{ try{localStorage.removeItem(k);}catch(_){} }); st.diets=[]; st.allergens=[]; st.hideBlocked=false; $("#demoNotice").hidden=false; toast("Signed out"); render(); return; }
+  });
+  document.addEventListener("input",e=>{
+    if(e.target.id==="rText" && openKey){ const it=findItem(openKey); lsSet("fc.draft."+it.itemId, e.target.value); }
+    if(e.target.id==="postBody") lsSet("fc.forumDraft", e.target.value);
+  });
+  document.addEventListener("keydown",e=>{ if(e.key==="Enter" && !$("#modal").hidden && (e.target.id==="em"||e.target.id==="code")){ e.preventDefault(); $("#mNext").click(); } });
+
+  const h=(location.hash||"").slice(1);
+  if(LOC[h]){ st.loc=h; st.area=LOC[h].area; st.meal="all"; $("#meal").value="all"; fillLocSel(); setView("menus"); }
+  else setView(VIEWS.includes(h)?h:"menus");
+  setInterval(()=>{ if(st.view==="menus" && st.date===nyNow().date) renderMenus(); }, 60000); // keep "open now" honest
+  initStore();
+}
+init();
+})();
+</script>
+</body>
+</html>
